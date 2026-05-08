@@ -1,0 +1,16 @@
+repos:
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v22.1.0
+    hooks:
+      - id: clang-format
+        types: [c++]
+        exclude: ^doctest/doctest\.h$
+
+  - repo: local
+    hooks:
+      - id: assemble-doctest
+        name: assemble doctest.h
+        language: python
+        entry: python scripts/assemble.py
+        pass_filenames: false
+        files: ^(scripts/assemble.py$|doctest/.*)

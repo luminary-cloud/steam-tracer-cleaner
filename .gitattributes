@@ -1,2 +1,37 @@
-# Auto detect text files and perform LF normalization
+# Default: normalize text on commit, check out per-platform line endings.
 * text=auto
+
+# Source code: always LF in the working tree, regardless of OS.
+*.c       text eol=lf
+*.cpp     text eol=lf
+*.h       text eol=lf
+*.hpp     text eol=lf
+*.cmake   text eol=lf
+*.md      text eol=lf
+*.json    text eol=lf
+*.yml     text eol=lf
+
+# Visual Studio / MSBuild files: keep CRLF, that's what VS expects.
+*.sln       text eol=crlf
+*.vcxproj   text eol=crlf
+*.filters   text eol=crlf
+*.user      text eol=crlf
+
+# Resource / manifest files: CRLF preferred by RC compiler.
+*.rc        text eol=crlf
+*.manifest  text eol=crlf
+
+# Binary assets.
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ttf binary
+*.otf binary
+*.exe binary
+*.dll binary
+*.lib binary
+*.pdb binary
+
+# GitHub linguist hints: don't count vendored sources toward language stats.
+third_party/** linguist-vendored

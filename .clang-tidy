@@ -1,0 +1,28 @@
+---
+Checks: >
+    -*,
+    bugprone-*,
+    -bugprone-easily-swappable-parameters,
+    cert-*,
+    -cert-err58-cpp,
+    cppcoreguidelines-*,
+    -cppcoreguidelines-avoid-magic-numbers,
+    -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+    -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+    -cppcoreguidelines-pro-type-reinterpret-cast,
+    -cppcoreguidelines-pro-type-vararg,
+    -cppcoreguidelines-non-private-member-variables-in-classes,
+    misc-*,
+    -misc-non-private-member-variables-in-classes,
+    modernize-*,
+    -modernize-use-trailing-return-type,
+    performance-*,
+    portability-*,
+    readability-*,
+    -readability-magic-numbers,
+    -readability-identifier-length,
+    -readability-named-parameter
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '(app|core|platform|ui)/.*\.(hpp|h)$'
+FormatStyle: file

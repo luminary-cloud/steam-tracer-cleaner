@@ -1,17 +1,132 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="App">
+      <UniqueIdentifier>{a1f00001-0000-0000-0000-000000000001}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="Core">
+      <UniqueIdentifier>{a1f00002-0000-0000-0000-000000000001}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{a1f00003-0000-0000-0000-000000000001}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{a1f00004-0000-0000-0000-000000000001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Screens">
+      <UniqueIdentifier>{a1f00004-0000-0000-0000-000000000002}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI\Widgets">
+      <UniqueIdentifier>{a1f00004-0000-0000-0000-000000000003}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Third Party">
+      <UniqueIdentifier>{a1f00005-0000-0000-0000-000000000001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Third Party\ImGui">
+      <UniqueIdentifier>{a1f00005-0000-0000-0000-000000000002}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Third Party\SQLite">
+      <UniqueIdentifier>{a1f00005-0000-0000-0000-000000000003}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{a1f00006-0000-0000-0000-000000000001}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Repo">
+      <UniqueIdentifier>{a1f00007-0000-0000-0000-000000000001}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClCompile Include="app\win_main.cpp"><Filter>App</Filter></ClCompile>
+    <ClCompile Include="app\app_state.cpp"><Filter>App</Filter></ClCompile>
+
+    <ClCompile Include="core\log.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\vdf.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\steam_paths.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\appid_map.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\targets.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\ignore_list.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\profile.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\dry_run.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\backup.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\cleaner.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\autoexec.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\audit.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\browser_cookies.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\crash_dumps.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\scheduled_clean.cpp"><Filter>Core</Filter></ClCompile>
+
+    <ClCompile Include="platform\registry.cpp"><Filter>Platform</Filter></ClCompile>
+    <ClCompile Include="platform\fs.cpp"><Filter>Platform</Filter></ClCompile>
+    <ClCompile Include="platform\process.cpp"><Filter>Platform</Filter></ClCompile>
+    <ClCompile Include="platform\paths.cpp"><Filter>Platform</Filter></ClCompile>
+
+    <ClCompile Include="ui\theme.cpp"><Filter>UI</Filter></ClCompile>
+    <ClCompile Include="ui\fonts.cpp"><Filter>UI</Filter></ClCompile>
+    <ClCompile Include="ui\main_window.cpp"><Filter>UI</Filter></ClCompile>
+    <ClCompile Include="ui\widgets\account_picker.cpp"><Filter>UI\Widgets</Filter></ClCompile>
+    <ClCompile Include="ui\widgets\target_tree.cpp"><Filter>UI\Widgets</Filter></ClCompile>
+    <ClCompile Include="ui\screens\cleaner_screen.cpp"><Filter>UI\Screens</Filter></ClCompile>
+    <ClCompile Include="ui\screens\configs_screen.cpp"><Filter>UI\Screens</Filter></ClCompile>
+    <ClCompile Include="ui\screens\audit_screen.cpp"><Filter>UI\Screens</Filter></ClCompile>
+    <ClCompile Include="ui\screens\backups_screen.cpp"><Filter>UI\Screens</Filter></ClCompile>
+    <ClCompile Include="ui\screens\settings_screen.cpp"><Filter>UI\Screens</Filter></ClCompile>
+
+    <ClCompile Include="third_party\imgui\imgui.cpp"><Filter>Third Party\ImGui</Filter></ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_demo.cpp"><Filter>Third Party\ImGui</Filter></ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_draw.cpp"><Filter>Third Party\ImGui</Filter></ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp"><Filter>Third Party\ImGui</Filter></ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_widgets.cpp"><Filter>Third Party\ImGui</Filter></ClCompile>
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_win32.cpp"><Filter>Third Party\ImGui</Filter></ClCompile>
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_dx11.cpp"><Filter>Third Party\ImGui</Filter></ClCompile>
+    <ClCompile Include="third_party\sqlite\sqlite3.c"><Filter>Third Party\SQLite</Filter></ClCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ClInclude Include="app\app_state.hpp"><Filter>App</Filter></ClInclude>
+    <ClInclude Include="core\log.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\vdf.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\steam_paths.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\appid_map.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\operation.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\targets.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\ignore_list.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\profile.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\dry_run.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\backup.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\cleaner.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\autoexec.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\audit.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\browser_cookies.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\crash_dumps.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\scheduled_clean.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="platform\registry.hpp"><Filter>Platform</Filter></ClInclude>
+    <ClInclude Include="platform\fs.hpp"><Filter>Platform</Filter></ClInclude>
+    <ClInclude Include="platform\process.hpp"><Filter>Platform</Filter></ClInclude>
+    <ClInclude Include="platform\paths.hpp"><Filter>Platform</Filter></ClInclude>
+    <ClInclude Include="ui\theme.hpp"><Filter>UI</Filter></ClInclude>
+    <ClInclude Include="ui\fonts.hpp"><Filter>UI</Filter></ClInclude>
+    <ClInclude Include="ui\util.hpp"><Filter>UI</Filter></ClInclude>
+    <ClInclude Include="ui\main_window.hpp"><Filter>UI</Filter></ClInclude>
+    <ClInclude Include="ui\widgets\account_picker.hpp"><Filter>UI\Widgets</Filter></ClInclude>
+    <ClInclude Include="ui\widgets\target_tree.hpp"><Filter>UI\Widgets</Filter></ClInclude>
+    <ClInclude Include="ui\screens\cleaner_screen.hpp"><Filter>UI\Screens</Filter></ClInclude>
+    <ClInclude Include="ui\screens\configs_screen.hpp"><Filter>UI\Screens</Filter></ClInclude>
+    <ClInclude Include="ui\screens\audit_screen.hpp"><Filter>UI\Screens</Filter></ClInclude>
+    <ClInclude Include="ui\screens\backups_screen.hpp"><Filter>UI\Screens</Filter></ClInclude>
+    <ClInclude Include="ui\screens\settings_screen.hpp"><Filter>UI\Screens</Filter></ClInclude>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ResourceCompile Include="app.rc"><Filter>Resources</Filter></ResourceCompile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="app.manifest"><Filter>Resources</Filter></None>
+    <None Include="README.md"><Filter>Repo</Filter></None>
+    <None Include="LICENSE"><Filter>Repo</Filter></None>
+    <None Include=".clang-format"><Filter>Repo</Filter></None>
+    <None Include=".clang-tidy"><Filter>Repo</Filter></None>
+    <None Include=".editorconfig"><Filter>Repo</Filter></None>
   </ItemGroup>
 </Project>

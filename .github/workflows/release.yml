@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-2022
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build Release
+        run: msbuild steam-tracer-cleaner.sln /p:Configuration=Release /p:Platform=x64 /m
+
+      - name: Stage artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Copy-Item build/Release/steam-tracer-cleaner.exe dist/steam-tracer-cleaner.exe
+          Copy-Item LICENSE dist/LICENSE.txt
+          Copy-Item README.md dist/README.md
+          Compress-Archive -Path dist/* -DestinationPath dist/steam-tracer-cleaner-${{ github.ref_name }}-x64.zip -Force
+
+      - name: Compute checksums
+        shell: pwsh
+        run: |
+          (Get-FileHash dist/steam-tracer-cleaner.exe -Algorithm SHA256).Hash | Out-File dist/steam-tracer-cleaner.exe.sha256
+          (Get-FileHash dist/steam-tracer-cleaner-${{ github.ref_name }}-x64.zip -Algorithm SHA256).Hash | Out-File dist/steam-tracer-cleaner-${{ github.ref_name }}-x64.zip.sha256
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/steam-tracer-cleaner.exe
+            dist/steam-tracer-cleaner.exe.sha256
+            dist/steam-tracer-cleaner-${{ github.ref_name }}-x64.zip
+            dist/steam-tracer-cleaner-${{ github.ref_name }}-x64.zip.sha256
+          generate_release_notes: true
+          draft: false

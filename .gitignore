@@ -1,32 +1,62 @@
-# Prerequisites
-*.d
+# Build output
+build/
+out/
+[Dd]ebug/
+[Rr]elease/
+x64/
+Win32/
 
-# Compiled Object files
-*.slo
-*.lo
-*.o
+# CMake
+CMakeFiles/
+CMakeCache.txt
+CMakeUserPresets.json
+cmake_install.cmake
+CTestTestfile.cmake
+*.cmake.in
+
+# vcpkg
+vcpkg_installed/
+vcpkg/
+
+# Visual Studio / MSVC
+.vs/
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.aps
+*.tlog
+*.ipdb
+*.iobj
+
+# Compiled artifacts
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
+*.o
+*.lo
 *.so
-*.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
+*.dylib
 *.lai
 *.la
 *.a
 *.lib
-
-# Executables
 *.exe
-*.out
-*.app
+*.pdb
+*.exp
+*.ilk
+
+# Precompiled headers
+*.gch
+*.pch
+
+# Editor / OS
+*.swp
+*.swo
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
+
+# Project-specific
+portable.flag
+*.bak

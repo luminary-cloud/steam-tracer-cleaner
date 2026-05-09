@@ -62,7 +62,7 @@ InstallResult copy_with_backup(const fs_std::path& src, const fs_std::path& dst)
 }  // namespace
 
 InstallResult install_autoexec(const std::vector<fs_std::path>& libraries, std::uint32_t appid,
-                               const fs_std::path& source_cfg) {
+                               const fs_std::path& source_cfg, const std::wstring& dest_filename) {
     InstallResult r;
     const auto* game = stc::core::appid::find_by_appid(appid);
     if (!game) {
@@ -78,7 +78,7 @@ InstallResult install_autoexec(const std::vector<fs_std::path>& libraries, std::
         }
         // mod_folder may contain forward slashes ("game/csgo"). Resolve as a relative path.
         fs_std::path mod_path = std::wstring{game->mod_folder};
-        auto cfg_path = game_dir / mod_path / "cfg" / "autoexec.cfg";
+        auto cfg_path = game_dir / mod_path / "cfg" / dest_filename;
         return copy_with_backup(source_cfg, cfg_path);
     }
     r.error = L"Game install folder not found in any Steam library";

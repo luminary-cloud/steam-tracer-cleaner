@@ -10,6 +10,7 @@ add_library(stc_core STATIC
     backup.cpp
     cleaner.cpp
     autoexec.cpp
+    config_library.cpp
     audit.cpp
     browser_cookies.cpp
     crash_dumps.cpp

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "core/cleaner.hpp"
+#include "core/config_library.hpp"
 #include "core/dry_run.hpp"
 #include "core/ignore_list.hpp"
 #include "core/profile.hpp"
@@ -20,6 +21,7 @@ struct AppState {
     std::filesystem::path config_dir;     // ignore.json, profiles/
     std::filesystem::path data_dir;       // logs/, backups/
     std::filesystem::path backups_dir;
+    std::filesystem::path configs_dir;
     bool portable_mode = false;
 
     std::optional<stc::core::steam::InstallInfo> install;
@@ -41,8 +43,15 @@ struct AppState {
     // Configs screen selection state
     std::filesystem::path autoexec_source;
     std::uint32_t autoexec_target_appid = 730;       // CS2 default
+    std::string autoexec_dest_filename = "autoexec.cfg";
     std::filesystem::path video_config_source;
     std::set<std::uint32_t> video_config_targets;
+
+    // Config library
+    std::vector<stc::core::config_library::LibraryEntry> autoexec_library;
+    std::vector<stc::core::config_library::LibraryEntry> video_library;
+    int selected_autoexec_idx = -1;
+    int selected_video_idx = -1;
 
     // Settings
     bool backup_by_default = true;
@@ -51,6 +60,7 @@ struct AppState {
 
     void initialize();
     void refresh_steam();
+    void refresh_config_library();
     void load_settings();
     void save_settings();
 };

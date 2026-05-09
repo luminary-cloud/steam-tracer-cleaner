@@ -29,14 +29,18 @@ void AppState::initialize() {
         data_dir = stc::platform::local_appdata_dir() / "steam-tracer-cleaner";
     }
     backups_dir = data_dir / "backups";
+    configs_dir = data_dir / "configs";
 
     std::error_code ec;
     std::filesystem::create_directories(config_dir, ec);
     std::filesystem::create_directories(data_dir, ec);
     std::filesystem::create_directories(backups_dir, ec);
+    std::filesystem::create_directories(configs_dir / "autoexec", ec);
+    std::filesystem::create_directories(configs_dir / "video", ec);
 
     load_settings();
     refresh_steam();
+    refresh_config_library();
 
     profiles.assign(stc::core::built_in_profiles().begin(), stc::core::built_in_profiles().end());
 
@@ -58,6 +62,12 @@ void AppState::refresh_steam() {
         accounts.clear();
         spdlog::warn("Steam install not found");
     }
+}
+
+void AppState::refresh_config_library() {
+    using CK = stc::core::config_library::ConfigKind;
+    autoexec_library = stc::core::config_library::list_configs(configs_dir, CK::Autoexec);
+    video_library = stc::core::config_library::list_configs(configs_dir, CK::Video);
 }
 
 void AppState::load_settings() {

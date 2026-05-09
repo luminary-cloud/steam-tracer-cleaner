@@ -20,7 +20,8 @@ struct InstallResult {
 // to its `<install>/<mod>/cfg/autoexec.cfg`. If a file already exists at the destination, it is
 // renamed to `autoexec.cfg.bak.<timestamp>` before overwrite.
 InstallResult install_autoexec(const std::vector<std::filesystem::path>& libraries,
-                               std::uint32_t appid, const std::filesystem::path& source_cfg);
+                               std::uint32_t appid, const std::filesystem::path& source_cfg,
+                               const std::wstring& dest_filename = L"autoexec.cfg");
 
 struct VideoConfigResult {
     bool ok = true;

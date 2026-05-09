@@ -148,8 +148,19 @@ void draw_settings_screen(stc::app::AppState& state) {
     ImGui::Spacing();
     if (ImGui::Button("Save settings", ImVec2(160, 32))) {
         state.save_settings();
+        ImGui::OpenPopup("Settings saved");
     }
     stc::ui::hover_tooltip("Persist the ignore list to ignore.json under the config directory.");
+
+    if (stc::ui::begin_styled_modal("Settings saved")) {
+        ImGui::TextWrapped("Settings written to %s.",
+                           (state.config_dir / "ignore.json").string().c_str());
+        ImGui::Spacing();
+        if (ImGui::Button("OK", ImVec2(80, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        stc::ui::end_styled_modal();
+    }
 }
 
 }  // namespace stc::ui::screens

@@ -51,6 +51,8 @@
     <ClCompile Include="core\backup.cpp"><Filter>Core</Filter></ClCompile>
     <ClCompile Include="core\cleaner.cpp"><Filter>Core</Filter></ClCompile>
     <ClCompile Include="core\autoexec.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\config_library.cpp"><Filter>Core</Filter></ClCompile>
+    <ClCompile Include="core\steam_lifecycle.cpp"><Filter>Core</Filter></ClCompile>
     <ClCompile Include="core\audit.cpp"><Filter>Core</Filter></ClCompile>
     <ClCompile Include="core\browser_cookies.cpp"><Filter>Core</Filter></ClCompile>
     <ClCompile Include="core\crash_dumps.cpp"><Filter>Core</Filter></ClCompile>
@@ -96,6 +98,8 @@
     <ClInclude Include="core\backup.hpp"><Filter>Core</Filter></ClInclude>
     <ClInclude Include="core\cleaner.hpp"><Filter>Core</Filter></ClInclude>
     <ClInclude Include="core\autoexec.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\config_library.hpp"><Filter>Core</Filter></ClInclude>
+    <ClInclude Include="core\steam_lifecycle.hpp"><Filter>Core</Filter></ClInclude>
     <ClInclude Include="core\audit.hpp"><Filter>Core</Filter></ClInclude>
     <ClInclude Include="core\browser_cookies.hpp"><Filter>Core</Filter></ClInclude>
     <ClInclude Include="core\crash_dumps.hpp"><Filter>Core</Filter></ClInclude>

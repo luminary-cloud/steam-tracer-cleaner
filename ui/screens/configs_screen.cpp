@@ -7,13 +7,12 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
-#include <array>
 #include <cstdio>
 
 #include "core/appid_map.hpp"
 #include "core/autoexec.hpp"
 #include "core/config_library.hpp"
-#include "platform/process.hpp"
+#include "core/steam_lifecycle.hpp"
 #include "ui/util.hpp"
 #include "ui/widgets/account_picker.hpp"
 
@@ -82,9 +81,7 @@ void draw_library_list(stc::app::AppState& state,
 
 void draw_autoexec_tab(stc::app::AppState& state) {
     ImGui::TextWrapped(
-        "Picks a .cfg file and copies it to the game's cfg directory. Source 1 games auto-execute "
-        "autoexec.cfg at startup. Source 2 games (CS2, Dota 2) require '+exec autoexec.cfg' in "
-        "launch options.");
+        "Picks a .cfg file and copies it to the game's cfg directory.");
     ImGui::Spacing();
 
     ImGui::Text("Game");
@@ -165,6 +162,7 @@ void draw_autoexec_tab(stc::app::AppState& state) {
         ImGui::BeginDisabled();
     }
     if (ImGui::Button("Install", ImVec2(180, 32))) {
+        stc::core::steam_lifecycle::close_steam_and_games();
         auto dest_name = stc::ui::from_utf8(state.autoexec_dest_filename);
         auto r = stc::core::autoexec::install_autoexec(state.libraries, state.autoexec_target_appid,
                                                        state.autoexec_source, dest_name);
@@ -182,24 +180,22 @@ void draw_autoexec_tab(stc::app::AppState& state) {
         ImGui::EndDisabled();
     }
 
-    if (ImGui::BeginPopupModal("Autoexec installed", nullptr,
-                               ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings)) {
-        ImGui::TextWrapped("%s copied. If this is a Source 2 game, add '+exec %s' to launch options.",
-                           state.autoexec_dest_filename.c_str(),
-                           state.autoexec_dest_filename.c_str());
-        if (ImGui::Button("OK")) {
+    if (stc::ui::begin_styled_modal("Autoexec installed")) {
+        ImGui::TextWrapped("Installed %s.", state.autoexec_dest_filename.c_str());
+        ImGui::Spacing();
+        if (ImGui::Button("OK", ImVec2(80, 0))) {
             ImGui::CloseCurrentPopup();
         }
-        ImGui::EndPopup();
+        stc::ui::end_styled_modal();
     }
-    if (ImGui::BeginPopupModal("Autoexec failed", nullptr,
-                               ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings)) {
+    if (stc::ui::begin_styled_modal("Autoexec failed")) {
         ImGui::TextWrapped(
             "Could not find an installed copy of the selected game across known Steam libraries.");
-        if (ImGui::Button("OK")) {
+        ImGui::Spacing();
+        if (ImGui::Button("OK", ImVec2(80, 0))) {
             ImGui::CloseCurrentPopup();
         }
-        ImGui::EndPopup();
+        stc::ui::end_styled_modal();
     }
 }
 
@@ -247,11 +243,6 @@ void draw_video_config_tab(stc::app::AppState& state) {
     ImGui::Spacing();
     bool can_install =
         !state.video_config_source.empty() && !state.video_config_targets.empty() && state.install;
-    if (stc::platform::proc::is_running(L"steam.exe")) {
-        ImGui::TextColored(ImVec4(1.0F, 0.7F, 0.2F, 1.0F),
-                           "Steam is running. Close Steam before installing video configs.");
-        can_install = false;
-    }
     if (!can_install) {
         ImGui::BeginDisabled();
     }
@@ -260,6 +251,7 @@ void draw_video_config_tab(stc::app::AppState& state) {
                            "userdata/<id>/730/local/cfg/cs2_video.txt. Existing files are renamed "
                            "to .bak.<timestamp> first.");
     if (install_pressed) {
+        stc::core::steam_lifecycle::close_steam_and_games();
         std::vector<std::uint32_t> ids(state.video_config_targets.begin(),
                                        state.video_config_targets.end());
         auto result = stc::core::autoexec::install_video_config(*state.install, state.accounts, ids,
@@ -273,13 +265,14 @@ void draw_video_config_tab(stc::app::AppState& state) {
         ImGui::EndDisabled();
     }
 
-    if (ImGui::BeginPopupModal("Video config result", nullptr,
-                               ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings)) {
-        ImGui::Text("Installed cs2_video.txt to %zu account(s).", state.video_config_targets.size());
-        if (ImGui::Button("OK")) {
+    if (stc::ui::begin_styled_modal("Video config result")) {
+        ImGui::TextWrapped("Installed cs2_video.txt to %zu account(s).",
+                           state.video_config_targets.size());
+        ImGui::Spacing();
+        if (ImGui::Button("OK", ImVec2(80, 0))) {
             ImGui::CloseCurrentPopup();
         }
-        ImGui::EndPopup();
+        stc::ui::end_styled_modal();
     }
 }
 

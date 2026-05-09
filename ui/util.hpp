@@ -31,6 +31,22 @@ inline std::wstring from_utf8(std::string_view s) {
     return out;
 }
 
+inline bool begin_styled_modal(const char* name, float width = 420.0F) {
+    ImGui::SetNextWindowSize(ImVec2(width, 0), ImGuiCond_Always);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16, 14));
+    bool open = ImGui::BeginPopupModal(
+        name, nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+    if (!open) {
+        ImGui::PopStyleVar();
+    }
+    return open;
+}
+
+inline void end_styled_modal() {
+    ImGui::EndPopup();
+    ImGui::PopStyleVar();
+}
+
 // Shows `text` as a tooltip if the previous widget is hovered. Call right after the widget you
 // want to annotate.
 inline void hover_tooltip(const char* text) {

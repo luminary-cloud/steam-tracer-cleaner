@@ -11,6 +11,7 @@ add_library(stc_core STATIC
     cleaner.cpp
     autoexec.cpp
     config_library.cpp
+    steam_lifecycle.cpp
     audit.cpp
     browser_cookies.cpp
     crash_dumps.cpp

@@ -7,7 +7,7 @@
 
 #include "core/cleaner.hpp"
 #include "core/dry_run.hpp"
-#include "platform/process.hpp"
+#include "core/steam_lifecycle.hpp"
 #include "ui/util.hpp"
 #include "ui/widgets/target_tree.hpp"
 
@@ -55,15 +55,8 @@ void run_clean(stc::app::AppState& state, bool with_backup) {
         return;
     }
 
-    // Steam rewrites loginusers.vdf and localconfig.vdf when it exits, so we close it before any
-    // destructive operation. WM_CLOSE first, TerminateProcess as a fallback after the timeout.
-    auto pids = stc::platform::proc::pids_by_name(L"steam.exe");
-    if (!pids.empty()) {
-        spdlog::info("Closing {} running Steam process(es) before clean", pids.size());
-        for (DWORD pid : pids) {
-            stc::platform::proc::gracefully_close(pid);
-        }
-    }
+    // Steam rewrites loginusers.vdf and localconfig.vdf when it exits, so close it first.
+    stc::core::steam_lifecycle::close_steam_and_games();
 
     std::optional<stc::core::backup::Session> session;
     if (with_backup) {

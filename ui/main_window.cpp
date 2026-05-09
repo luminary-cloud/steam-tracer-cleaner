@@ -174,6 +174,8 @@ void draw_content(stc::app::AppState& state) {
         case stc::app::Screen::Settings: stc::ui::screens::draw_settings_screen(state); break;
     }
 
+    ImGui::Dummy(ImVec2(0, 24));
+
     ImGui::PopItemWidth();
     ImGui::Unindent(kContentPaddingX);
     ImGui::PopStyleVar();

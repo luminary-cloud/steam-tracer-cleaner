@@ -73,6 +73,8 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;dxgi.lib;dwmapi.lib;Shell32.lib;Advapi32.lib;Ole32.lib;Comctl32.lib;Comdlg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EnableUAC>true</EnableUAC>
+      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
     <Manifest>
       <AdditionalManifestFiles>$(ProjectDir)app.manifest</AdditionalManifestFiles>
@@ -117,6 +119,7 @@
     <ClCompile Include="core\cleaner.cpp" />
     <ClCompile Include="core\autoexec.cpp" />
     <ClCompile Include="core\config_library.cpp" />
+    <ClCompile Include="core\steam_lifecycle.cpp" />
     <ClCompile Include="core\audit.cpp" />
     <ClCompile Include="core\browser_cookies.cpp" />
     <ClCompile Include="core\crash_dumps.cpp" />
@@ -178,6 +181,7 @@
     <ClInclude Include="core\cleaner.hpp" />
     <ClInclude Include="core\autoexec.hpp" />
     <ClInclude Include="core\config_library.hpp" />
+    <ClInclude Include="core\steam_lifecycle.hpp" />
     <ClInclude Include="core\audit.hpp" />
     <ClInclude Include="core\browser_cookies.hpp" />
     <ClInclude Include="core\crash_dumps.hpp" />

@@ -122,6 +122,23 @@ bool execute_one(const PlanStep& step, backup::Session* bkp, std::wstring& err_o
             }
             return true;
         }
+        case OpKind::WriteRegistryString: {
+            ParsedRegPath rp;
+            if (!parse_reg_path(op.target, rp)) {
+                err_out = L"Invalid registry path: " + op.target;
+                return false;
+            }
+            if (bkp) {
+                bkp->record_registry_value(op.target, op.value_name);
+                bkp->note_op(op);
+            }
+            auto r = stc::platform::reg::write_string(rp.root, rp.subkey, op.value_name, op.payload);
+            if (!r) {
+                err_out = L"WriteRegistryString failed: " + op.target + L" :: " + op.value_name;
+                return false;
+            }
+            return true;
+        }
         case OpKind::VdfRemoveChild: {
             fs_std::path p{op.target};
             if (bkp) {

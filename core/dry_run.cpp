@@ -92,10 +92,23 @@ void rewrite_loginusers(std::vector<PlanStep>& steps, const std::string& target_
     }
 }
 
+void strip_autologin_coupled_deletes(std::vector<PlanStep>& steps, const std::string& target_id) {
+    // RememberPassword and LastGameNameUsed go with whichever account ends up as AutoLoginUser,
+    // so they ride along. PseudoUUID stays cleaned: it's a machine GUID, not account data.
+    std::erase_if(steps, [&](const PlanStep& s) {
+        if (s.target_id != target_id || s.op.kind != OpKind::RemoveRegistryValue) {
+            return false;
+        }
+        return s.op.value_name == L"AutoLoginUser" || s.op.value_name == L"RememberPassword" ||
+               s.op.value_name == L"LastGameNameUsed";
+    });
+}
+
 void rewrite_autologin(std::vector<PlanStep>& steps, const std::string& target_id,
                        const ResolveContext& ctx, const IgnoreList* ignore) {
-    // If the current AutoLoginUser belongs to a preserved account, leave it (and the surrounding
-    // auto-login state) alone. Otherwise the default delete ops stand.
+    // If the current AutoLoginUser is preserved, leave it alone. If it's being wiped but other
+    // accounts are preserved, redirect to one of those — clearing AutoLoginUser sends Steam to
+    // the login form rather than the picker, even with surviving loginusers.vdf entries.
     if (!ignore || ignore->preserved_account_ids.empty()) {
         return;
     }
@@ -105,22 +118,22 @@ void rewrite_autologin(std::vector<PlanStep>& steps, const std::string& target_i
         return;
     }
     auto sid = stc::core::steam::resolve_auto_login(ctx.install, *current);
-    if (sid.empty()) {
+    if (!sid.empty() && ignore->preserves_account(sid)) {
+        strip_autologin_coupled_deletes(steps, target_id);
         return;
     }
-    if (!ignore->preserves_account(sid)) {
+
+    auto redirect_name = pick_autologin_redirect(ctx.accounts, *ignore);
+    if (!redirect_name) {
         return;
     }
-    // Strip the AutoLoginUser delete plus the values that are coupled to the auto-login flow.
-    // RememberPassword and LastGameNameUsed describe the now-preserved account's state, so they
-    // ride along. PseudoUUID stays cleaned: it's a machine GUID, not account data.
-    std::erase_if(steps, [&](const PlanStep& s) {
-        if (s.target_id != target_id || s.op.kind != OpKind::RemoveRegistryValue) {
-            return false;
-        }
-        return s.op.value_name == L"AutoLoginUser" || s.op.value_name == L"RememberPassword" ||
-               s.op.value_name == L"LastGameNameUsed";
-    });
+    strip_autologin_coupled_deletes(steps, target_id);
+    Operation op;
+    op.kind = OpKind::WriteRegistryString;
+    op.target = L"HKCU\\Software\\Valve\\Steam";
+    op.value_name = L"AutoLoginUser";
+    op.payload = std::move(*redirect_name);
+    steps.push_back(PlanStep{target_id, std::move(op)});
 }
 
 void rewrite_remote_clients(std::vector<PlanStep>& steps, const std::string& target_id,
@@ -245,6 +258,29 @@ void rewrite_userdata_for_appids(std::vector<PlanStep>& steps, const std::string
 }
 
 }  // namespace
+
+std::optional<std::wstring> pick_autologin_redirect(
+    std::span<const stc::core::steam::AccountInfo> accounts, const IgnoreList& ignore) {
+    const stc::core::steam::AccountInfo* fallback = nullptr;
+    for (const auto& acc : accounts) {
+        if (acc.account_name.empty()) {
+            continue;
+        }
+        if (!ignore.preserves_account(acc.steamid64)) {
+            continue;
+        }
+        if (acc.most_recent) {
+            return acc.account_name;
+        }
+        if (fallback == nullptr) {
+            fallback = &acc;
+        }
+    }
+    if (fallback != nullptr) {
+        return fallback->account_name;
+    }
+    return std::nullopt;
+}
 
 Plan build_plan(std::span<const Target* const> targets, const ResolveContext& ctx,
                 const PlanOptions& opts) {

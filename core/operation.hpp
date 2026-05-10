@@ -15,6 +15,8 @@ enum class OpKind {
     VdfRemoveChild,            // target = vdf path, value_name = top-level child key to remove
     ClearRegistryValue,        // writes empty string instead of deleting; used for AutoLoginUser
                                // when partially preserving
+    WriteRegistryString,       // writes `payload` to the value; used to redirect AutoLoginUser
+                               // to a preserved account when the previous one is wiped
     ClearBrowserSteamCookies,  // target = cookies db path, value_name = "chromium" | "firefox"
 };
 
@@ -35,6 +37,9 @@ struct Operation {
 
     // Populated by the planner for the dry-run summary.
     std::uint64_t size_bytes = 0;
+
+    // Replacement value for WriteRegistryString. Empty for other op kinds.
+    std::wstring payload;
 };
 
 }  // namespace stc::core

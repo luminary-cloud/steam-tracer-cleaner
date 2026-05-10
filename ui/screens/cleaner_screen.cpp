@@ -208,11 +208,16 @@ void draw_cleaner_screen(stc::app::AppState& state) {
                 case stc::core::OpKind::RemoveRegistryValue: kind = "REGV"; break;
                 case stc::core::OpKind::RemoveRegistryKey: kind = "REGK"; break;
                 case stc::core::OpKind::ClearRegistryValue: kind = "CLEAR"; break;
+                case stc::core::OpKind::WriteRegistryString: kind = "WRITE"; break;
                 case stc::core::OpKind::VdfRemoveChild: kind = "VDF"; break;
+                case stc::core::OpKind::ClearBrowserSteamCookies: kind = "COOKIES"; break;
             }
             std::string row = std::string{"["} + kind + "] " + stc::ui::to_utf8(step.op.target);
             if (!step.op.value_name.empty()) {
                 row += " :: " + stc::ui::to_utf8(step.op.value_name);
+            }
+            if (step.op.kind == stc::core::OpKind::WriteRegistryString) {
+                row += " = \"" + stc::ui::to_utf8(step.op.payload) + "\"";
             }
             ImGui::TextWrapped("%s", row.c_str());
         }

@@ -3,6 +3,7 @@ add_executable(stc_tests
     test_ignore_list.cpp
     test_appid_map.cpp
     test_steam_paths.cpp
+    test_dry_run.cpp
 )
 
 target_link_libraries(stc_tests PRIVATE

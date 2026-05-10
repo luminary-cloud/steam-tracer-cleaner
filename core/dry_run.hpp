@@ -1,12 +1,14 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <span>
 #include <string>
 #include <vector>
 
 #include "core/ignore_list.hpp"
 #include "core/operation.hpp"
+#include "core/steam_paths.hpp"
 #include "core/targets.hpp"
 
 namespace stc::core {
@@ -36,5 +38,11 @@ Plan build_plan(std::span<const Target* const> targets, const ResolveContext& ct
 // Convenience: resolve a list of target ids first.
 Plan build_plan_by_ids(std::span<const std::string> target_ids, const ResolveContext& ctx,
                        const PlanOptions& opts);
+
+// Picks the preserved login name to replace AutoLoginUser when the current auto-login account
+// is being wiped. Prefers most_recent, otherwise the first preserved account with a non-empty
+// account_name. Returns nullopt if none match.
+std::optional<std::wstring> pick_autologin_redirect(
+    std::span<const stc::core::steam::AccountInfo> accounts, const IgnoreList& ignore);
 
 }  // namespace stc::core

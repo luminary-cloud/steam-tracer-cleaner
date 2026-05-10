@@ -170,6 +170,9 @@ bool Session::finalize() {
             oj["value_name"] = utf8(op.value_name);
             oj["account_steamid64"] = utf8(op.account_steamid64);
             oj["size_bytes"] = op.size_bytes;
+            if (!op.payload.empty()) {
+                oj["payload"] = utf8(op.payload);
+            }
             ops.push_back(std::move(oj));
         }
         j["operations"] = std::move(ops);

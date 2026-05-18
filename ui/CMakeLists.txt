@@ -1,6 +1,8 @@
 add_library(stc_ui STATIC
     theme.cpp
     fonts.cpp
+    icons.cpp
+    icons_data.cpp
     main_window.cpp
     screens/cleaner_screen.cpp
     screens/configs_screen.cpp
@@ -18,6 +20,7 @@ target_link_libraries(stc_ui PUBLIC
     stc_imgui
     stc_spdlog
     Comdlg32
+    Windowscodecs
 )
 
 stc_set_compile_options(stc_ui)

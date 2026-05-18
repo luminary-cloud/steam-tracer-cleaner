@@ -3,6 +3,7 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cwctype>
 #include <vector>
 
@@ -104,11 +105,23 @@ void strip_autologin_coupled_deletes(std::vector<PlanStep>& steps, const std::st
     });
 }
 
+void push_vdf_set(std::vector<PlanStep>& steps, const std::string& target_id,
+                  const std::filesystem::path& vdf_path, std::wstring_view subkey_path,
+                  std::wstring_view value, std::wstring_view account_steamid64) {
+    Operation op;
+    op.kind = OpKind::VdfSetValue;
+    op.target = vdf_path.wstring();
+    op.value_name = std::wstring{subkey_path};
+    op.payload = std::wstring{value};
+    op.account_steamid64 = std::wstring{account_steamid64};
+    steps.push_back(PlanStep{target_id, std::move(op)});
+}
+
 void rewrite_autologin(std::vector<PlanStep>& steps, const std::string& target_id,
                        const ResolveContext& ctx, const IgnoreList* ignore) {
-    // If the current AutoLoginUser is preserved, leave it alone. If it's being wiped but other
-    // accounts are preserved, redirect to one of those — clearing AutoLoginUser sends Steam to
-    // the login form rather than the picker, even with surviving loginusers.vdf entries.
+    // Clearing AutoLoginUser drops Steam to a blank login form. Steam also reads mostrecent /
+    // Timestamp from loginusers.vdf, so flipping the registry value alone isn't enough — both
+    // need to point at the same surviving account.
     if (!ignore || ignore->preserved_account_ids.empty()) {
         return;
     }
@@ -123,17 +136,50 @@ void rewrite_autologin(std::vector<PlanStep>& steps, const std::string& target_i
         return;
     }
 
-    auto redirect_name = pick_autologin_redirect(ctx.accounts, *ignore);
-    if (!redirect_name) {
+    auto redirect = pick_autologin_redirect(ctx.accounts, *ignore);
+    strip_autologin_coupled_deletes(steps, target_id);
+
+    if (!redirect) {
+        spdlog::warn(
+            "AutoLoginUser redirect skipped: no preserved account has an AccountName in "
+            "loginusers.vdf. AutoLoginUser left at its current value.");
         return;
     }
-    strip_autologin_coupled_deletes(steps, target_id);
-    Operation op;
-    op.kind = OpKind::WriteRegistryString;
-    op.target = L"HKCU\\Software\\Valve\\Steam";
-    op.value_name = L"AutoLoginUser";
-    op.payload = std::move(*redirect_name);
-    steps.push_back(PlanStep{target_id, std::move(op)});
+
+    Operation reg_op;
+    reg_op.kind = OpKind::WriteRegistryString;
+    reg_op.target = L"HKCU\\Software\\Valve\\Steam";
+    reg_op.value_name = L"AutoLoginUser";
+    reg_op.payload = redirect->account_name;
+    reg_op.account_steamid64 = redirect->steamid64;
+    steps.push_back(PlanStep{target_id, std::move(reg_op)});
+
+    auto vdf_path = ctx.install.config_dir / "loginusers.vdf";
+    auto now_secs =
+        std::chrono::duration_cast<std::chrono::seconds>(
+            std::chrono::system_clock::now().time_since_epoch()).count();
+    auto ts_str = std::to_wstring(now_secs);
+
+    // Both casings show up in real loginusers.vdf files depending on Steam client version.
+    push_vdf_set(steps, target_id, vdf_path, redirect->steamid64 + L"\\mostrecent", L"1",
+                 redirect->steamid64);
+    push_vdf_set(steps, target_id, vdf_path, redirect->steamid64 + L"\\MostRecent", L"1",
+                 redirect->steamid64);
+    push_vdf_set(steps, target_id, vdf_path, redirect->steamid64 + L"\\Timestamp", ts_str,
+                 redirect->steamid64);
+
+    for (const auto& acc : ctx.accounts) {
+        if (acc.steamid64 == redirect->steamid64) {
+            continue;
+        }
+        if (!ignore->preserves_account(acc.steamid64)) {
+            continue;
+        }
+        push_vdf_set(steps, target_id, vdf_path, acc.steamid64 + L"\\mostrecent", L"0",
+                     acc.steamid64);
+        push_vdf_set(steps, target_id, vdf_path, acc.steamid64 + L"\\MostRecent", L"0",
+                     acc.steamid64);
+    }
 }
 
 void rewrite_remote_clients(std::vector<PlanStep>& steps, const std::string& target_id,
@@ -259,7 +305,7 @@ void rewrite_userdata_for_appids(std::vector<PlanStep>& steps, const std::string
 
 }  // namespace
 
-std::optional<std::wstring> pick_autologin_redirect(
+std::optional<AutoLoginRedirect> pick_autologin_redirect(
     std::span<const stc::core::steam::AccountInfo> accounts, const IgnoreList& ignore) {
     const stc::core::steam::AccountInfo* fallback = nullptr;
     for (const auto& acc : accounts) {
@@ -270,14 +316,14 @@ std::optional<std::wstring> pick_autologin_redirect(
             continue;
         }
         if (acc.most_recent) {
-            return acc.account_name;
+            return AutoLoginRedirect{acc.account_name, acc.steamid64};
         }
         if (fallback == nullptr) {
             fallback = &acc;
         }
     }
     if (fallback != nullptr) {
-        return fallback->account_name;
+        return AutoLoginRedirect{fallback->account_name, fallback->steamid64};
     }
     return std::nullopt;
 }

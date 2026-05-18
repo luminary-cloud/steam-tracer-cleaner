@@ -39,10 +39,15 @@ Plan build_plan(std::span<const Target* const> targets, const ResolveContext& ct
 Plan build_plan_by_ids(std::span<const std::string> target_ids, const ResolveContext& ctx,
                        const PlanOptions& opts);
 
-// Picks the preserved login name to replace AutoLoginUser when the current auto-login account
+struct AutoLoginRedirect {
+    std::wstring account_name;   // value to write into HKCU\...\Steam\AutoLoginUser
+    std::wstring steamid64;      // matching entry in loginusers.vdf, used to flip mostrecent
+};
+
+// Picks the preserved account to replace AutoLoginUser when the current auto-login account
 // is being wiped. Prefers most_recent, otherwise the first preserved account with a non-empty
 // account_name. Returns nullopt if none match.
-std::optional<std::wstring> pick_autologin_redirect(
+std::optional<AutoLoginRedirect> pick_autologin_redirect(
     std::span<const stc::core::steam::AccountInfo> accounts, const IgnoreList& ignore);
 
 }  // namespace stc::core

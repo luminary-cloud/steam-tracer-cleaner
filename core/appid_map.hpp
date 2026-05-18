@@ -15,6 +15,8 @@ struct GameInfo {
     std::wstring_view mod_folder;         // <install_folder>/<mod_folder>/cfg/autoexec.cfg
     std::wstring_view display_name;
     bool is_source2;                      // CS2 / Dota 2
+    std::wstring_view exe_name;           // process image name, used to close just this game
+                                          // (and not Steam) when installing a config
 };
 
 std::span<const GameInfo> all_games() noexcept;

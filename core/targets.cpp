@@ -5,6 +5,7 @@
 
 #include "core/browser_cookies.hpp"
 #include "core/crash_dumps.hpp"
+#include "core/steam_paths.hpp"
 
 namespace stc::core {
 namespace {
@@ -198,8 +199,9 @@ std::vector<Operation> resolve_remote_clients(const ResolveContext& ctx) {
 }
 
 std::vector<Operation> resolve_avatarcache(const ResolveContext& ctx) {
-    // Per-file rather than RemoveTree because we used to skip a single avatar that contained the
-    // user's custom-uploaded persona pic. The whitelist got removed but the per-file walk stuck.
+    // Per-file so each <SteamID64>.png can be tagged with its owning account; the ignore filter
+    // then skips avatars belonging to a preserved id. Filenames that don't parse as a SteamID64
+    // fall through with an empty account_steamid64 and are removed.
     std::vector<Operation> ops;
     auto root = ctx.install.config_dir / "avatarcache";
     std::error_code ec;
@@ -208,12 +210,22 @@ std::vector<Operation> resolve_avatarcache(const ResolveContext& ctx) {
     }
     for (auto it = fs_std::directory_iterator(root, ec); !ec && it != fs_std::end(it);
          it.increment(ec)) {
-        if (it->is_regular_file(ec)) {
-            Operation op;
-            op.kind = OpKind::RemoveFile;
-            op.target = it->path().wstring();
-            ops.push_back(std::move(op));
+        if (!it->is_regular_file(ec)) {
+            continue;
         }
+        Operation op;
+        op.kind = OpKind::RemoveFile;
+        op.target = it->path().wstring();
+
+        auto stem = it->path().stem().wstring();
+        const bool all_digits =
+            !stem.empty() &&
+            std::all_of(stem.begin(), stem.end(),
+                        [](wchar_t c) { return c >= L'0' && c <= L'9'; });
+        if (all_digits && stc::core::steam::steamid64_to_account_id(stem) != 0) {
+            op.account_steamid64 = stem;
+        }
+        ops.push_back(std::move(op));
     }
     return ops;
 }

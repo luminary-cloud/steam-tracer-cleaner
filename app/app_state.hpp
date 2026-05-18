@@ -1,9 +1,11 @@
 #pragma once
 
 #include <filesystem>
+#include <mutex>
 #include <optional>
 #include <set>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "core/cleaner.hpp"
@@ -12,6 +14,7 @@
 #include "core/ignore_list.hpp"
 #include "core/profile.hpp"
 #include "core/steam_paths.hpp"
+#include "core/update_check.hpp"
 
 namespace stc::app {
 
@@ -57,12 +60,22 @@ struct AppState {
     bool backup_by_default = true;
     bool confirm_full_wipe = true;
     int backup_keep_count = 10;       // auto-prune older backups; 0 means keep all
+    bool check_updates_on_launch = true;
+    std::string version_check_skip_until;
+
+    std::mutex update_mutex;
+    std::optional<stc::core::update_check::Result> update_result;
+    bool update_modal_dismissed_this_session = false;
+    std::jthread update_thread;
 
     void initialize();
     void refresh_steam();
     void refresh_config_library();
     void load_settings();
     void save_settings();
+    void load_app_settings();
+    void save_app_settings();
+    void start_update_check();
 };
 
 }  // namespace stc::app

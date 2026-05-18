@@ -110,6 +110,19 @@ void draw_settings_screen(stc::app::AppState& state) {
                         "in the background.");
 
     ImGui::Spacing();
+    ImGui::SeparatorText("Updates");
+    ImGui::Checkbox("Check for updates on launch", &state.check_updates_on_launch);
+    stc::ui::hover_tooltip("Fetches the latest release tag from api.github.com on startup. "
+                           "No analytics. Off = no network calls.");
+    if (!state.version_check_skip_until.empty()) {
+        ImGui::TextDisabled("Skipping version: %s", state.version_check_skip_until.c_str());
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Clear##skip")) {
+            state.version_check_skip_until.clear();
+        }
+    }
+
+    ImGui::Spacing();
     ImGui::SeparatorText("Ignore list");
     ImGui::Checkbox("Preserve all ssfn (Steam Guard sentry) files",
                     &state.ignore_list.preserve_all_ssfn);
@@ -150,11 +163,10 @@ void draw_settings_screen(stc::app::AppState& state) {
         state.save_settings();
         ImGui::OpenPopup("Settings saved");
     }
-    stc::ui::hover_tooltip("Persist the ignore list to ignore.json under the config directory.");
+    stc::ui::hover_tooltip("Persist the ignore list and app settings to the config directory.");
 
     if (stc::ui::begin_styled_modal("Settings saved")) {
-        ImGui::TextWrapped("Settings written to %s.",
-                           (state.config_dir / "ignore.json").string().c_str());
+        ImGui::TextWrapped("Settings written to %s.", state.config_dir.string().c_str());
         ImGui::Spacing();
         if (ImGui::Button("OK", ImVec2(80, 0))) {
             ImGui::CloseCurrentPopup();

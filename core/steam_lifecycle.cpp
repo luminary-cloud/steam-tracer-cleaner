@@ -5,6 +5,7 @@
 #include <array>
 #include <string_view>
 
+#include "core/appid_map.hpp"
 #include "platform/process.hpp"
 
 namespace stc::core::steam_lifecycle {
@@ -42,6 +43,24 @@ CloseResult close_steam_and_games(DWORD wait_ms) {
         spdlog::info("Closed {} game(s) and {} Steam process(es)", r.games_closed, r.steam_closed);
     }
     return r;
+}
+
+int close_games_for_appid(std::uint32_t appid, DWORD wait_ms) {
+    const auto* g = stc::core::appid::find_by_appid(appid);
+    if (g == nullptr || g->exe_name.empty()) {
+        return 0;
+    }
+    int closed = close_all_named(g->exe_name, wait_ms);
+    if (closed > 0) {
+        // exe_name is ASCII; narrow cast avoids dragging in WideCharToMultiByte.
+        std::string narrow;
+        narrow.reserve(g->exe_name.size());
+        for (wchar_t c : g->exe_name) {
+            narrow.push_back(static_cast<char>(c));
+        }
+        spdlog::info("Closed {} instance(s) of {} for appid {}", closed, narrow, appid);
+    }
+    return closed;
 }
 
 }  // namespace stc::core::steam_lifecycle

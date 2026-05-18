@@ -3,13 +3,18 @@
 #include <imgui.h>
 
 #include <array>
+#include <cstdio>
+#include <mutex>
 
+#include "core/version.hpp"
 #include "ui/fonts.hpp"
+#include "ui/icons.hpp"
 #include "ui/screens/audit_screen.hpp"
 #include "ui/screens/backups_screen.hpp"
 #include "ui/screens/cleaner_screen.hpp"
 #include "ui/screens/configs_screen.hpp"
 #include "ui/screens/settings_screen.hpp"
+#include "ui/util.hpp"
 
 namespace stc::ui {
 namespace {
@@ -22,8 +27,13 @@ constexpr float kNavItemSpacing = 4.0F;
 constexpr float kSectionGap = 18.0F;
 constexpr float kStatusBarHeight = 36.0F;
 constexpr float kFooterMargin = 16.0F;       // gap between scrollable content and the status bar
+constexpr float kSidebarFooterH = 56.0F;
 constexpr float kContentPaddingX = 24.0F;
 constexpr float kContentPaddingY = 20.0F;
+
+constexpr const wchar_t* kRepoUrlW = L"https://github.com/luminary-cloud/steam-tracer-cleaner";
+constexpr const wchar_t* kReleasesUrlW =
+    L"https://github.com/luminary-cloud/steam-tracer-cleaner/releases";
 
 struct NavSection {
     const char* heading;
@@ -84,17 +94,20 @@ void draw_left_nav(stc::app::AppState& state) {
                   ImColor(0.659F, 0.635F, 0.620F, 0.10F));
 
     ImGui::Dummy(ImVec2(0, kSidebarPaddingY));
-    ImGui::Indent(kSidebarPaddingX);
 
     if (auto* tf = stc::ui::fonts::title()) {
         ImGui::PushFont(tf);
     }
-    ImGui::TextUnformatted("Steam Tracer");
-    ImGui::TextColored(kHeading, "Cleaner v0.1");
+    auto centered_line = [](const char* s) {
+        float w = ImGui::CalcTextSize(s).x;
+        ImGui::SetCursorPosX((kSidebarWidth - w) * 0.5F);
+        ImGui::TextUnformatted(s);
+    };
+    centered_line("Steam Tracer");
+    centered_line("Cleaner");
     if (stc::ui::fonts::title()) {
         ImGui::PopFont();
     }
-    ImGui::Unindent(kSidebarPaddingX);
 
     ImGui::Dummy(ImVec2(0, 10));
     ImVec2 sep_a = ImGui::GetCursorScreenPos();
@@ -127,6 +140,51 @@ void draw_left_nav(stc::app::AppState& state) {
                               {stc::app::Screen::Backups, "Backups", nullptr},
                               {stc::app::Screen::Settings, "Settings", nullptr},
                           });
+
+    float remaining = ImGui::GetContentRegionAvail().y;
+    if (remaining > kSidebarFooterH) {
+        ImGui::Dummy(ImVec2(0, remaining - kSidebarFooterH));
+    }
+
+    ImVec2 footer_sep = ImGui::GetCursorScreenPos();
+    footer_sep.x = win_pos.x + kSidebarPaddingX;
+    draw->AddLine(footer_sep,
+                  ImVec2(win_pos.x + win_size.x - kSidebarPaddingX, footer_sep.y),
+                  ImColor(0.659F, 0.635F, 0.620F, 0.12F));
+    ImGui::Dummy(ImVec2(0, 10));
+
+    char version_label[64];
+    std::snprintf(version_label, sizeof(version_label), "Version: %s", stc::core::kAppVersion);
+    const float icon_size = 16.0F;
+    const float icon_frame_pad = 4.0F;
+    const float icon_total = icon_size + icon_frame_pad * 2.0F;
+    const float text_w = ImGui::CalcTextSize(version_label).x;
+    const float spacing = ImGui::GetStyle().ItemSpacing.x;
+    const float total = icon_total + spacing + text_w;
+    ImGui::SetCursorPosX((kSidebarWidth - total) * 0.5F);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(icon_frame_pad, icon_frame_pad));
+    if (auto gh = stc::ui::icons::github()) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1, 1, 1, 0.08F));
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(1, 1, 1, 0.14F));
+        if (ImGui::ImageButton("##gh", gh, ImVec2(icon_size, icon_size))) {
+            stc::ui::open_url(kRepoUrlW);
+        }
+        ImGui::PopStyleColor(3);
+        if (ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("Open repository on GitHub");
+        }
+    } else {
+        if (ImGui::SmallButton("GitHub")) {
+            stc::ui::open_url(kRepoUrlW);
+        }
+    }
+    ImGui::PopStyleVar();
+    ImGui::SameLine();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextColored(kHeading, "%s", version_label);
+    ImGui::Dummy(ImVec2(0, 12));
 
     ImGui::EndChild();
 }
@@ -206,6 +264,46 @@ void draw_main_window(stc::app::AppState& state) {
     }
     ImGui::End();
     ImGui::PopStyleVar();
+
+    {
+        std::lock_guard lk(state.update_mutex);
+        if (state.update_result && !state.update_modal_dismissed_this_session &&
+            state.update_result->latest_tag != state.version_check_skip_until) {
+            ImGui::OpenPopup("Update available");
+        }
+    }
+
+    if (stc::ui::begin_styled_modal("Update available", 500.0F)) {
+        std::string latest;
+        {
+            std::lock_guard lk(state.update_mutex);
+            if (state.update_result) {
+                latest = state.update_result->latest_tag;
+            }
+        }
+        ImGui::TextWrapped("Steam Tracer Cleaner %s is available. You're on v%s.",
+                           latest.c_str(), stc::core::kAppVersion);
+        ImGui::Spacing();
+        const ImVec2 btn{146, 28};
+        if (ImGui::Button("Open releases", btn)) {
+            stc::ui::open_url(kReleasesUrlW);
+            state.update_modal_dismissed_this_session = true;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Skip this version", btn)) {
+            state.version_check_skip_until = latest;
+            state.save_app_settings();
+            state.update_modal_dismissed_this_session = true;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Remind me later", btn)) {
+            state.update_modal_dismissed_this_session = true;
+            ImGui::CloseCurrentPopup();
+        }
+        stc::ui::end_styled_modal();
+    }
 }
 
 }  // namespace stc::ui

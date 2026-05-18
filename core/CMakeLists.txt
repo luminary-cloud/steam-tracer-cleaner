@@ -16,6 +16,7 @@ add_library(stc_core STATIC
     browser_cookies.cpp
     crash_dumps.cpp
     scheduled_clean.cpp
+    update_check.cpp
 )
 
 target_include_directories(stc_core PUBLIC ${CMAKE_SOURCE_DIR})
@@ -24,6 +25,7 @@ target_link_libraries(stc_core PUBLIC
     stc_spdlog
     stc_json
     stc_sqlite
+    Winhttp
 )
 
 stc_set_compile_options(stc_core)

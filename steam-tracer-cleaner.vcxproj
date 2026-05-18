@@ -72,7 +72,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;dxgi.lib;dwmapi.lib;Shell32.lib;Advapi32.lib;Ole32.lib;Comctl32.lib;Comdlg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d11.lib;dxgi.lib;dwmapi.lib;Shell32.lib;Advapi32.lib;Ole32.lib;Comctl32.lib;Comdlg32.lib;Winhttp.lib;Windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EnableUAC>true</EnableUAC>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
@@ -124,12 +124,15 @@
     <ClCompile Include="core\browser_cookies.cpp" />
     <ClCompile Include="core\crash_dumps.cpp" />
     <ClCompile Include="core\scheduled_clean.cpp" />
+    <ClCompile Include="core\update_check.cpp" />
     <ClCompile Include="platform\registry.cpp" />
     <ClCompile Include="platform\fs.cpp" />
     <ClCompile Include="platform\process.cpp" />
     <ClCompile Include="platform\paths.cpp" />
     <ClCompile Include="ui\theme.cpp" />
     <ClCompile Include="ui\fonts.cpp" />
+    <ClCompile Include="ui\icons.cpp" />
+    <ClCompile Include="ui\icons_data.cpp" />
     <ClCompile Include="ui\main_window.cpp" />
     <ClCompile Include="ui\widgets\account_picker.cpp" />
     <ClCompile Include="ui\widgets\target_tree.cpp" />

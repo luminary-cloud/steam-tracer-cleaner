@@ -4,6 +4,8 @@ add_executable(stc_tests
     test_appid_map.cpp
     test_steam_paths.cpp
     test_dry_run.cpp
+    test_avatar_resolver.cpp
+    test_update_check.cpp
 )
 
 target_link_libraries(stc_tests PRIVATE

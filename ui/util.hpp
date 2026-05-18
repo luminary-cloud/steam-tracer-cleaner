@@ -2,6 +2,8 @@
 
 #include <windows.h>
 
+#include <shellapi.h>
+
 #include <imgui.h>
 
 #include <string>
@@ -53,6 +55,11 @@ inline void hover_tooltip(const char* text) {
     if (text != nullptr && text[0] != '\0' && ImGui::IsItemHovered()) {
         ImGui::SetTooltip("%s", text);
     }
+}
+
+inline void open_url(std::wstring_view url) {
+    std::wstring s{url};
+    ShellExecuteW(nullptr, L"open", s.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 inline std::string format_bytes(std::uint64_t bytes) {

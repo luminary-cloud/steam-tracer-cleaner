@@ -162,7 +162,7 @@ void draw_autoexec_tab(stc::app::AppState& state) {
         ImGui::BeginDisabled();
     }
     if (ImGui::Button("Install", ImVec2(180, 32))) {
-        stc::core::steam_lifecycle::close_steam_and_games();
+        stc::core::steam_lifecycle::close_games_for_appid(state.autoexec_target_appid);
         auto dest_name = stc::ui::from_utf8(state.autoexec_dest_filename);
         auto r = stc::core::autoexec::install_autoexec(state.libraries, state.autoexec_target_appid,
                                                        state.autoexec_source, dest_name);
@@ -251,7 +251,7 @@ void draw_video_config_tab(stc::app::AppState& state) {
                            "userdata/<id>/730/local/cfg/cs2_video.txt. Existing files are renamed "
                            "to .bak.<timestamp> first.");
     if (install_pressed) {
-        stc::core::steam_lifecycle::close_steam_and_games();
+        stc::core::steam_lifecycle::close_games_for_appid(730);
         std::vector<std::uint32_t> ids(state.video_config_targets.begin(),
                                        state.video_config_targets.end());
         auto result = stc::core::autoexec::install_video_config(*state.install, state.accounts, ids,

@@ -13,6 +13,9 @@ enum class OpKind {
     RemoveRegistryValue,
     RemoveRegistryKey,
     VdfRemoveChild,            // target = vdf path, value_name = top-level child key to remove
+    VdfSetValue,               // target = vdf path, value_name = backslash-separated key path,
+                               // payload = string value. Flips mostrecent/Timestamp on the
+                               // redirect target.
     ClearRegistryValue,        // writes empty string instead of deleting; used for AutoLoginUser
                                // when partially preserving
     WriteRegistryString,       // writes `payload` to the value; used to redirect AutoLoginUser

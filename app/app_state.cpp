@@ -1,10 +1,12 @@
 #include "app/app_state.hpp"
 
+#include <nlohmann/json.hpp>
 #include <spdlog/spdlog.h>
 
 #include <fstream>
 #include <system_error>
 
+#include "core/version.hpp"
 #include "platform/paths.hpp"
 
 namespace stc::app {
@@ -48,6 +50,8 @@ void AppState::initialize() {
         const auto& first = profiles.front();
         selected_target_ids.insert(first.target_ids.begin(), first.target_ids.end());
     }
+
+    start_update_check();
 }
 
 void AppState::refresh_steam() {
@@ -77,10 +81,66 @@ void AppState::load_settings() {
     } else {
         ignore_list = stc::core::default_ignore_list();
     }
+    load_app_settings();
 }
 
 void AppState::save_settings() {
     stc::core::save_ignore_list(ignore_list, config_dir / "ignore.json");
+    save_app_settings();
+}
+
+void AppState::load_app_settings() {
+    std::ifstream f(config_dir / "settings.json");
+    if (!f) {
+        return;
+    }
+    try {
+        nlohmann::json j;
+        f >> j;
+        check_updates_on_launch = j.value("check_updates_on_launch", true);
+        version_check_skip_until = j.value("version_check_skip_until", std::string{});
+        backup_by_default = j.value("backup_by_default", backup_by_default);
+        confirm_full_wipe = j.value("confirm_full_wipe", confirm_full_wipe);
+        backup_keep_count = j.value("backup_keep_count", backup_keep_count);
+    } catch (const std::exception& e) {
+        spdlog::warn("settings.json parse failed: {}", e.what());
+    }
+}
+
+void AppState::save_app_settings() {
+    nlohmann::json j;
+    j["check_updates_on_launch"] = check_updates_on_launch;
+    j["version_check_skip_until"] = version_check_skip_until;
+    j["backup_by_default"] = backup_by_default;
+    j["confirm_full_wipe"] = confirm_full_wipe;
+    j["backup_keep_count"] = backup_keep_count;
+
+    std::error_code ec;
+    std::filesystem::create_directories(config_dir, ec);
+    std::ofstream f(config_dir / "settings.json", std::ios::trunc);
+    if (!f) {
+        spdlog::warn("settings.json: open for write failed");
+        return;
+    }
+    f << j.dump(4);
+}
+
+void AppState::start_update_check() {
+    if (!check_updates_on_launch) {
+        return;
+    }
+    update_thread = std::jthread([this](std::stop_token st) {
+        if (st.stop_requested()) {
+            return;
+        }
+        auto r = stc::core::update_check::fetch_latest_release(
+            "luminary-cloud/steam-tracer-cleaner", stc::core::kAppVersion);
+        if (!r || !r->newer_than_current || st.stop_requested()) {
+            return;
+        }
+        std::lock_guard lk(update_mutex);
+        update_result = std::move(r);
+    });
 }
 
 }  // namespace stc::app

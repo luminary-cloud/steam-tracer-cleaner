@@ -8,8 +8,8 @@ IDI_APP_ICON ICON "assets/icon.ico"
 // so it should not also be embedded as a resource here.
 
 VS_VERSION_INFO VERSIONINFO
-    FILEVERSION    0,1,0,0
-    PRODUCTVERSION 0,1,0,0
+    FILEVERSION    0,1,4,0
+    PRODUCTVERSION 0,1,4,0
     FILEFLAGSMASK  0x3fL
 #ifdef _DEBUG
     FILEFLAGS      0x1L
@@ -26,12 +26,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName",      "luminary"
             VALUE "FileDescription",  "Cleans Steam account residue and installs autoexec / video configs"
-            VALUE "FileVersion",      "0.1.0.0"
+            VALUE "FileVersion",      "0.1.4.0"
             VALUE "InternalName",     "steam-tracer-cleaner"
             VALUE "LegalCopyright",   "Copyright (c) 2026 luminary-cloud"
             VALUE "OriginalFilename", "steam-tracer-cleaner.exe"
             VALUE "ProductName",      "Steam Tracer Cleaner"
-            VALUE "ProductVersion",   "0.1.0.0"
+            VALUE "ProductVersion",   "0.1.4.0"
         END
     END
     BLOCK "VarFileInfo"

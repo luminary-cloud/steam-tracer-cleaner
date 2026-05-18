@@ -33,7 +33,8 @@ TEST_CASE("pick_autologin_redirect prefers most_recent preserved account") {
 
     auto pick = pick_autologin_redirect(accounts, ignore);
     REQUIRE(pick.has_value());
-    CHECK(*pick == L"bob");
+    CHECK(pick->account_name == L"bob");
+    CHECK(pick->steamid64 == L"76561198000000002");
 }
 
 TEST_CASE("pick_autologin_redirect falls back to first preserved with a name") {
@@ -46,7 +47,8 @@ TEST_CASE("pick_autologin_redirect falls back to first preserved with a name") {
 
     auto pick = pick_autologin_redirect(accounts, ignore);
     REQUIRE(pick.has_value());
-    CHECK(*pick == L"alice");
+    CHECK(pick->account_name == L"alice");
+    CHECK(pick->steamid64 == L"76561198000000001");
 }
 
 TEST_CASE("pick_autologin_redirect skips accounts with empty account_name") {
@@ -59,7 +61,8 @@ TEST_CASE("pick_autologin_redirect skips accounts with empty account_name") {
 
     auto pick = pick_autologin_redirect(accounts, ignore);
     REQUIRE(pick.has_value());
-    CHECK(*pick == L"bob");
+    CHECK(pick->account_name == L"bob");
+    CHECK(pick->steamid64 == L"76561198000000002");
 }
 
 TEST_CASE("pick_autologin_redirect ignores non-preserved most_recent") {
@@ -72,7 +75,8 @@ TEST_CASE("pick_autologin_redirect ignores non-preserved most_recent") {
 
     auto pick = pick_autologin_redirect(accounts, ignore);
     REQUIRE(pick.has_value());
-    CHECK(*pick == L"bob");
+    CHECK(pick->account_name == L"bob");
+    CHECK(pick->steamid64 == L"76561198000000002");
 }
 
 TEST_CASE("pick_autologin_redirect returns nullopt when no preserved accounts have a name") {

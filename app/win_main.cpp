@@ -18,8 +18,10 @@
 #include "core/dry_run.hpp"
 #include "core/log.hpp"
 #include "core/profile.hpp"
+#include "core/version.hpp"
 #include "platform/paths.hpp"
 #include "ui/fonts.hpp"
+#include "ui/icons.hpp"
 #include "ui/main_window.hpp"
 #include "ui/theme.hpp"
 
@@ -197,7 +199,7 @@ int APIENTRY wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdline, int show) {
         } catch (...) {  // NOLINT(bugprone-empty-catch)
         }
     }
-    spdlog::info("Starting steam-tracer-cleaner 0.1.0");
+    spdlog::info("Starting steam-tracer-cleaner {}", stc::core::kAppVersion);
 
     if (has_flag(cmdline, L"--scheduled")) {
         spdlog::info("Headless mode (--scheduled)");
@@ -240,6 +242,7 @@ int APIENTRY wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdline, int show) {
     stc::ui::theme::apply_dark();
     ImGui_ImplWin32_Init(hwnd);
     ImGui_ImplDX11_Init(g_device, g_context);
+    stc::ui::icons::load(g_device);
 
     stc::app::AppState state;
     try {
@@ -283,6 +286,7 @@ int APIENTRY wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdline, int show) {
         g_swap_chain->Present(1, 0);
     }
 
+    stc::ui::icons::shutdown();
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();

@@ -178,6 +178,45 @@ bool execute_one(const PlanStep& step, backup::Session* bkp, std::wstring& err_o
             }
             return true;
         }
+        case OpKind::VdfSetValue: {
+            fs_std::path p{op.target};
+            if (bkp) {
+                bkp->record_vdf(p);
+                bkp->note_op(op);
+            }
+            auto doc = vdf::load(p);
+            if (!doc) {
+                err_out = L"VDF parse failed: " + p.wstring();
+                return false;
+            }
+            if (!doc->root || !doc->root->is_object()) {
+                err_out = L"VDF root is not an object: " + p.wstring();
+                return false;
+            }
+            // Missing intermediate segments are treated as a no-op rather than synthesised:
+            // Steam rewrites mostrecent on next login, so guessing wrong is worse than nothing.
+            auto* node = doc->root.get();
+            std::wstring remaining = op.value_name;
+            while (true) {
+                auto sep = remaining.find(L'\\');
+                if (sep == std::wstring::npos) {
+                    node->set(remaining, std::make_unique<vdf::Node>(op.payload));
+                    break;
+                }
+                auto* next = node->find(remaining.substr(0, sep));
+                if (!next || !next->is_object()) {
+                    spdlog::warn("VdfSetValue: path segment missing in {}", p.string());
+                    return true;
+                }
+                node = next;
+                remaining = remaining.substr(sep + 1);
+            }
+            if (!vdf::save(*doc, p)) {
+                err_out = L"VDF save failed: " + p.wstring();
+                return false;
+            }
+            return true;
+        }
         case OpKind::ClearBrowserSteamCookies: {
             fs_std::path p{op.target};
             if (bkp) {

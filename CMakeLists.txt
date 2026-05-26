@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(steam-tracer-cleaner
-    VERSION 0.1.4
+    VERSION 1.0.0
     DESCRIPTION "Cleans Steam account residue and installs autoexec / video configs"
     LANGUAGES C CXX
 )

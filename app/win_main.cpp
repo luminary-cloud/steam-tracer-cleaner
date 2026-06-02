@@ -5,6 +5,9 @@
 
 #include <d3d11.h>
 #include <dxgi.h>
+#include <dwmapi.h>
+#include <uxtheme.h>
+#include <windowsx.h>
 #include <tchar.h>
 
 #include <imgui.h>
@@ -24,6 +27,7 @@
 #include "ui/icons.hpp"
 #include "ui/main_window.hpp"
 #include "ui/theme.hpp"
+#include "ui/widgets/title_bar.hpp"
 
 #include <cwchar>
 
@@ -129,6 +133,76 @@ LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 g_resize_h = HIWORD(lp);
             }
             return 0;
+
+        case WM_NCCALCSIZE:
+            // Collapse the standard frame so the client area covers the whole
+            // window and the custom title bar owns the top strip. When maximized
+            // the window overhangs the work area by the frame thickness, so inset
+            // by it (DPI-aware) to avoid clipping content off-screen.
+            if (wp == TRUE) {
+                auto* params = reinterpret_cast<NCCALCSIZE_PARAMS*>(lp);
+                if (IsZoomed(hwnd)) {
+                    const UINT dpi = GetDpiForWindow(hwnd);
+                    const int fx = GetSystemMetricsForDpi(SM_CXFRAME, dpi) +
+                                   GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+                    const int fy = GetSystemMetricsForDpi(SM_CYFRAME, dpi) +
+                                   GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
+                    params->rgrc[0].left += fx;
+                    params->rgrc[0].right -= fx;
+                    params->rgrc[0].top += fy;
+                    params->rgrc[0].bottom -= fy;
+                }
+                return 0;
+            }
+            break;
+
+        case WM_NCHITTEST: {
+            // Map the cursor to resize borders, the draggable caption, or the
+            // client. The button block stays client so ImGui receives its clicks;
+            // everything else on the title strip is caption so Windows drives
+            // drag, snap, and double-click maximize natively.
+            POINT pt{GET_X_LPARAM(lp), GET_Y_LPARAM(lp)};
+            RECT wr;
+            GetWindowRect(hwnd, &wr);
+            const bool zoomed = IsZoomed(hwnd);
+            const float scale = static_cast<float>(GetDpiForWindow(hwnd)) / 96.0F;
+            const int border = zoomed ? 0 : static_cast<int>(stc::ui::widgets::kResizeBorder * scale);
+
+            const bool left = pt.x < wr.left + border;
+            const bool right = pt.x >= wr.right - border;
+            const bool top = pt.y < wr.top + border;
+            const bool bottom = pt.y >= wr.bottom - border;
+
+            if (!zoomed) {
+                if (top && left) return HTTOPLEFT;
+                if (top && right) return HTTOPRIGHT;
+                if (bottom && left) return HTBOTTOMLEFT;
+                if (bottom && right) return HTBOTTOMRIGHT;
+                if (left) return HTLEFT;
+                if (right) return HTRIGHT;
+                if (top) return HTTOP;
+                if (bottom) return HTBOTTOM;
+            }
+
+            const int title_h = static_cast<int>(stc::ui::widgets::kTitleBarHeight * scale);
+            if (pt.y < wr.top + title_h) {
+                const int strip = static_cast<int>(stc::ui::widgets::kCaptionBtnWidth *
+                                                   stc::ui::widgets::kCaptionBtnCount * scale);
+                if (pt.x >= wr.right - strip) return HTCLIENT;
+                return HTCAPTION;
+            }
+            return HTCLIENT;
+        }
+
+        case WM_GETMINMAXINFO: {
+            // A frameless window would otherwise shrink to nothing.
+            auto* mmi = reinterpret_cast<MINMAXINFO*>(lp);
+            const float scale = static_cast<float>(GetDpiForWindow(hwnd)) / 96.0F;
+            mmi->ptMinTrackSize.x = static_cast<LONG>(640 * scale);
+            mmi->ptMinTrackSize.y = static_cast<LONG>(480 * scale);
+            return 0;
+        }
+
         case WM_SYSCOMMAND:
             // Block Alt key from popping the system menu, ImGui handles its own.
             if ((wp & 0xfff0) == SC_KEYMENU) {
@@ -228,7 +302,17 @@ int APIENTRY wWinMain(HINSTANCE inst, HINSTANCE, PWSTR cmdline, int show) {
         return 1;
     }
 
+    // Frameless window: WM_NCCALCSIZE collapses the OS frame; the title bar is
+    // drawn in ImGui. A 1px DWM frame extension keeps the system drop shadow and
+    // rounded corners, and SWP_FRAMECHANGED forces the non-client recompute
+    // through wnd_proc before the window is first shown.
+    const MARGINS frame_margins{0, 0, 1, 0};
+    DwmExtendFrameIntoClientArea(hwnd, &frame_margins);
+    SetWindowPos(hwnd, nullptr, 0, 0, 0, 0,
+                 SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE);
+
     ShowWindow(hwnd, show);
+    ShowWindow(hwnd, SW_SHOWNORMAL);
     UpdateWindow(hwnd);
 
     IMGUI_CHECKVERSION();

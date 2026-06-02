@@ -143,25 +143,28 @@ void draw_cleaner_screen(stc::app::AppState& state) {
     ImGui::Spacing();
     ImGui::SeparatorText("Targets");
 
-    // The targets child fills the leftover height. Reservation must match every item drawn below
-    // this point exactly, or inner_content grows a scrollbar. Baseline accounts for the Spacing
-    // pair around the button row plus the row itself; plan and result branches add their own
-    // section heights when present.
+    // The targets child fills the leftover height so the button row lands just above the bottom
+    // padding without an outer scrollbar. The exact trailing height (button row + the
+    // kContentPaddingBottom dummy draw_content() appends, plus ImGui's inter-item spacing) is hard
+    // to predict in immediate mode, so instead of hard-coding it we self-correct: each frame we
+    // measure the room left after the buttons and nudge the reservation to hit it exactly (see the
+    // controller at the end of this function). Slope is 1, so it settles in a single frame.
     const float spacing = ImGui::GetStyle().ItemSpacing.y;
-    const float button_h = 34.0F;
     const float text_h = ImGui::GetTextLineHeight();
     const float plan_list_h = 180.0F;
 
-    float reserved = spacing * 4.0F + button_h;
+    static float s_base_reserved = 78.0F;  // button row + bottom dummy; converges after frame 1
+    float reserved = s_base_reserved;
     if (state.last_plan) {
-        reserved += text_h + spacing + plan_list_h;
+        reserved += spacing * 2.0F + text_h + plan_list_h;  // "Plan:" line + list, 2 leading gaps
     }
     if (state.last_result) {
-        reserved += spacing + text_h;
+        reserved += spacing * 2.0F + text_h;  // explicit Spacing() + "Result:" line
     }
 
     float targets_h = ImGui::GetContentRegionAvail().y - reserved;
-    if (targets_h < 200.0F) {
+    const bool targets_clamped = targets_h < 200.0F;
+    if (targets_clamped) {
         targets_h = 200.0F;
     }
     ImGui::BeginChild("##targets", ImVec2(0, targets_h), ImGuiChildFlags_Borders);
@@ -190,8 +193,6 @@ void draw_cleaner_screen(stc::app::AppState& state) {
     }
     stc::ui::hover_tooltip(
         "Delete without a backup. Steam is closed automatically. Faster but irreversible.");
-
-    ImGui::Spacing();
 
     if (state.last_plan) {
         const auto& plan = *state.last_plan;
@@ -241,6 +242,15 @@ void draw_cleaner_screen(stc::app::AppState& state) {
         }
     }
 
+    // Controller for s_base_reserved (declared above). The room left below the button row should be
+    // exactly kContentPaddingBottom — the zero-leading-spacing dummy draw_content() draws after us;
+    // nudge the reservation by however far off we are so the row sits that far above the footer next
+    // frame — no outer scrollbar, no blank strip. Skipped while a plan/result is shown (those add their
+    // own estimated heights and would fight the controller) or while the list is at its minimum height.
+    if (!targets_clamped && !state.last_plan && !state.last_result) {
+        const float target_leftover = stc::ui::kContentPaddingBottom;
+        s_base_reserved -= ImGui::GetContentRegionAvail().y - target_leftover;
+    }
 }
 
 }  // namespace stc::ui::screens

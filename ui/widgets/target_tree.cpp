@@ -55,7 +55,7 @@ bool target_tree(std::set<std::string>& selected) {
                         changed = true;
                     }
                     if (!t->description.empty() && ImGui::IsItemHovered()) {
-                        ImGui::SetTooltip("%s", stc::ui::to_utf8(t->description).c_str());
+                        stc::ui::set_tooltip("%s", stc::ui::to_utf8(t->description).c_str());
                     }
                 }
                 ImGui::EndTable();

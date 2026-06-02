@@ -68,6 +68,7 @@
     <ClCompile Include="ui\main_window.cpp"><Filter>UI</Filter></ClCompile>
     <ClCompile Include="ui\widgets\account_picker.cpp"><Filter>UI\Widgets</Filter></ClCompile>
     <ClCompile Include="ui\widgets\target_tree.cpp"><Filter>UI\Widgets</Filter></ClCompile>
+    <ClCompile Include="ui\widgets\title_bar.cpp"><Filter>UI\Widgets</Filter></ClCompile>
     <ClCompile Include="ui\screens\cleaner_screen.cpp"><Filter>UI\Screens</Filter></ClCompile>
     <ClCompile Include="ui\screens\configs_screen.cpp"><Filter>UI\Screens</Filter></ClCompile>
     <ClCompile Include="ui\screens\audit_screen.cpp"><Filter>UI\Screens</Filter></ClCompile>
@@ -114,6 +115,7 @@
     <ClInclude Include="ui\main_window.hpp"><Filter>UI</Filter></ClInclude>
     <ClInclude Include="ui\widgets\account_picker.hpp"><Filter>UI\Widgets</Filter></ClInclude>
     <ClInclude Include="ui\widgets\target_tree.hpp"><Filter>UI\Widgets</Filter></ClInclude>
+    <ClInclude Include="ui\widgets\title_bar.hpp"><Filter>UI\Widgets</Filter></ClInclude>
     <ClInclude Include="ui\screens\cleaner_screen.hpp"><Filter>UI\Screens</Filter></ClInclude>
     <ClInclude Include="ui\screens\configs_screen.hpp"><Filter>UI\Screens</Filter></ClInclude>
     <ClInclude Include="ui\screens\audit_screen.hpp"><Filter>UI\Screens</Filter></ClInclude>

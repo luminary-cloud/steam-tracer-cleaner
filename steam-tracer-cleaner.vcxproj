@@ -136,6 +136,7 @@
     <ClCompile Include="ui\main_window.cpp" />
     <ClCompile Include="ui\widgets\account_picker.cpp" />
     <ClCompile Include="ui\widgets\target_tree.cpp" />
+    <ClCompile Include="ui\widgets\title_bar.cpp" />
     <ClCompile Include="ui\screens\cleaner_screen.cpp" />
     <ClCompile Include="ui\screens\configs_screen.cpp" />
     <ClCompile Include="ui\screens\audit_screen.cpp" />

@@ -11,6 +11,7 @@ add_library(stc_ui STATIC
     screens/settings_screen.cpp
     widgets/account_picker.cpp
     widgets/target_tree.cpp
+    widgets/title_bar.cpp
 )
 
 target_include_directories(stc_ui PUBLIC ${CMAKE_SOURCE_DIR})

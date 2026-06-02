@@ -6,10 +6,16 @@
 
 #include <imgui.h>
 
+#include <cstdarg>
 #include <string>
 #include <string_view>
 
 namespace stc::ui {
+
+// Gap below each screen's body, between the content and the status bar. draw_content() draws it with
+// zero leading spacing, so this is the exact distance; the Cleaner screen's self-correcting layout
+// targets it directly to sit its button row this far above the footer without an outer scrollbar.
+inline constexpr float kContentPaddingBottom = 4.0F;
 
 inline std::string to_utf8(std::wstring_view s) {
     if (s.empty()) {
@@ -53,8 +59,21 @@ inline void end_styled_modal() {
 // want to annotate.
 inline void hover_tooltip(const char* text) {
     if (text != nullptr && text[0] != '\0' && ImGui::IsItemHovered()) {
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 6));
         ImGui::SetTooltip("%s", text);
+        ImGui::PopStyleVar();
     }
+}
+
+// Drop-in for ImGui::SetTooltip that restores the inner WindowPadding the global
+// (0, 0) theme strips, so tooltip text isn't flush against the border.
+inline void set_tooltip(const char* fmt, ...) IM_FMTARGS(1) {
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 6));
+    va_list args;
+    va_start(args, fmt);
+    ImGui::SetTooltipV(fmt, args);
+    va_end(args);
+    ImGui::PopStyleVar();
 }
 
 inline void open_url(std::wstring_view url) {

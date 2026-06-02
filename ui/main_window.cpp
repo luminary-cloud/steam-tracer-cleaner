@@ -7,7 +7,6 @@
 #include <mutex>
 
 #include "core/version.hpp"
-#include "ui/fonts.hpp"
 #include "ui/icons.hpp"
 #include "ui/screens/audit_screen.hpp"
 #include "ui/screens/backups_screen.hpp"
@@ -15,19 +14,19 @@
 #include "ui/screens/configs_screen.hpp"
 #include "ui/screens/settings_screen.hpp"
 #include "ui/util.hpp"
+#include "ui/widgets/title_bar.hpp"
 
 namespace stc::ui {
 namespace {
 
 constexpr float kSidebarWidth = 188.0F;
 constexpr float kSidebarPaddingX = 16.0F;
-constexpr float kSidebarPaddingY = 18.0F;
 constexpr float kNavItemHeight = 32.0F;
 constexpr float kNavItemSpacing = 4.0F;
 constexpr float kSectionGap = 18.0F;
 constexpr float kStatusBarHeight = 36.0F;
-constexpr float kFooterMargin = 16.0F;       // gap between scrollable content and the status bar
-constexpr float kSidebarFooterH = 56.0F;
+constexpr float kFooterMargin = 16.0F;       // reserves the status bar + a small margin below the footer
+constexpr float kSidebarFooterH = 72.0F;
 constexpr float kContentPaddingX = 24.0F;
 constexpr float kContentPaddingY = 20.0F;
 
@@ -93,28 +92,6 @@ void draw_left_nav(stc::app::AppState& state) {
                   ImVec2(win_pos.x + win_size.x - 1, win_pos.y + win_size.y),
                   ImColor(0.659F, 0.635F, 0.620F, 0.10F));
 
-    ImGui::Dummy(ImVec2(0, kSidebarPaddingY));
-
-    if (auto* tf = stc::ui::fonts::title()) {
-        ImGui::PushFont(tf);
-    }
-    auto centered_line = [](const char* s) {
-        float w = ImGui::CalcTextSize(s).x;
-        ImGui::SetCursorPosX((kSidebarWidth - w) * 0.5F);
-        ImGui::TextUnformatted(s);
-    };
-    centered_line("Steam Tracer");
-    centered_line("Cleaner");
-    if (stc::ui::fonts::title()) {
-        ImGui::PopFont();
-    }
-
-    ImGui::Dummy(ImVec2(0, 10));
-    ImVec2 sep_a = ImGui::GetCursorScreenPos();
-    sep_a.x = win_pos.x + kSidebarPaddingX;
-    draw->AddLine(sep_a, ImVec2(win_pos.x + win_size.x - kSidebarPaddingX, sep_a.y),
-                  ImColor(0.659F, 0.635F, 0.620F, 0.12F));
-
     auto draw_section = [&](const char* heading, std::initializer_list<NavSection::Item> items) {
         ImGui::Dummy(ImVec2(0, kSectionGap));
         ImGui::Indent(kSidebarPaddingX);
@@ -173,7 +150,7 @@ void draw_left_nav(stc::app::AppState& state) {
         }
         ImGui::PopStyleColor(3);
         if (ImGui::IsItemHovered()) {
-            ImGui::SetTooltip("Open repository on GitHub");
+            set_tooltip("Open repository on GitHub");
         }
     } else {
         if (ImGui::SmallButton("GitHub")) {
@@ -232,7 +209,11 @@ void draw_content(stc::app::AppState& state) {
         case stc::app::Screen::Settings: stc::ui::screens::draw_settings_screen(state); break;
     }
 
-    ImGui::Dummy(ImVec2(0, 24));
+    // Bottom padding with no leading ItemSpacing, so the trailing gap is exactly kContentPaddingBottom.
+    // The Cleaner screen's self-correction relies on this being the precise distance to the content edge.
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(ImGui::GetStyle().ItemSpacing.x, 0.0F));
+    ImGui::Dummy(ImVec2(0, kContentPaddingBottom));
+    ImGui::PopStyleVar();
 
     ImGui::PopItemWidth();
     ImGui::Unindent(kContentPaddingX);
@@ -258,6 +239,11 @@ void draw_main_window(stc::app::AppState& state) {
 
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
     if (ImGui::Begin("##root", nullptr, flags)) {
+        widgets::draw_title_bar();
+        // Sit the content flush under the bar; the child would otherwise leave an
+        // ItemSpacing gap that shows a strip of the darker root background.
+        ImGui::SetCursorPosY(widgets::kTitleBarHeight);
+
         draw_left_nav(state);
         ImGui::SameLine(0, 0);
         draw_content(state);

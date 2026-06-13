@@ -17,10 +17,10 @@ first.
 <img src="assets/screenshot.png" alt="Steam Tracer Cleaner" width="820">
 </details>
 
-</div>
-
 Single-file executable, no installer, no telemetry. Keeps a preserve list so the
 accounts you want survive every cleanup.
+
+</div>
 
 ## Features
 

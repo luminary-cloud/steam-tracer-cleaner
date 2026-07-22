@@ -55,10 +55,11 @@ const std::vector<Profile>& builtins() {
              "steam.depotcache", "steam.shadercache", "steam.workshop_temp",
              "steam.steamapps_downloading", "steam.avatarcache", "steam.tenfoot_httpcache",
              "steam.overlayhtmlcache", "crash.local_appdata", "steam.htmlcache",
-             "browser.steam_cookies", "steam.config_vdf", "steam.loginusers", "steam.ssfn",
-             "steam.reg.autologin", "steam.reg.users", "steam.reg.activeprocess", "steam.reg.apps",
-             "steam.reg.url_handler", "steam.remoteclients", "steam.userdata_inventory_cache",
-             "steam.userdata_librarycache", "steam.userdata_sharedconfig"},
+             "browser.steam_cookies", "steam.config_vdf", "steam.local_vdf", "steam.loginusers",
+             "steam.ssfn", "steam.reg.autologin", "steam.reg.users", "steam.reg.activeprocess",
+             "steam.reg.apps", "steam.reg.url_handler", "steam.remoteclients",
+             "steam.userdata_inventory_cache", "steam.userdata_librarycache",
+             "steam.userdata_sharedconfig", "steam.userdata_ugcmsgcache"},
             {},
             false});
         p.push_back(Profile{
@@ -69,12 +70,13 @@ const std::vector<Profile>& builtins() {
              "steam.depotcache", "steam.shadercache", "steam.workshop_temp",
              "steam.steamapps_downloading", "steam.avatarcache", "steam.tenfoot_httpcache",
              "steam.overlayhtmlcache", "crash.local_appdata", "steam.htmlcache",
-             "browser.steam_cookies", "steam.config_vdf", "steam.loginusers", "steam.ssfn",
-             "steam.reg.autologin", "steam.reg.users", "steam.reg.activeprocess", "steam.reg.apps",
-             "steam.reg.url_handler", "steam.remoteclients", "steam.userdata",
+             "browser.steam_cookies", "steam.config_vdf", "steam.local_vdf", "steam.loginusers",
+             "steam.ssfn", "steam.reg.autologin", "steam.reg.users", "steam.reg.activeprocess",
+             "steam.reg.apps", "steam.reg.url_handler", "steam.remoteclients", "steam.userdata",
              "steam.userdata_inventory_cache", "steam.userdata_librarycache",
              "steam.userdata_sharedconfig", "steam.userdata_shortcuts",
-             "steam.userdata_screenshots", "steam.controller_configs"},
+             "steam.userdata_screenshots", "steam.controller_configs",
+             "steam.userdata_gamerecordings", "steam.userdata_ugcmsgcache"},
             {},
             true});
         p.push_back(Profile{

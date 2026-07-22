@@ -49,6 +49,7 @@ std::optional<InstallInfo> discover_install() {
     info.userdata_dir = *root / "userdata";
     info.appcache_dir = *root / "appcache";
     info.htmlcache_dir = stc::platform::local_appdata_dir() / "Steam" / "htmlcache";
+    info.local_vdf_path = stc::platform::local_appdata_dir() / "Steam" / "local.vdf";
     return info;
 }
 

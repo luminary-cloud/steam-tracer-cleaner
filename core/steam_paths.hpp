@@ -13,6 +13,7 @@ struct InstallInfo {
     std::filesystem::path userdata_dir;   // <install>/userdata
     std::filesystem::path appcache_dir;   // <install>/appcache
     std::filesystem::path htmlcache_dir;  // %LOCALAPPDATA%/Steam/htmlcache
+    std::filesystem::path local_vdf_path; // %LOCALAPPDATA%/Steam/local.vdf
 };
 
 std::optional<InstallInfo> discover_install();

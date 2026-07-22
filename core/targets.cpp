@@ -149,6 +149,11 @@ std::vector<Operation> resolve_htmlcache(const ResolveContext& ctx) {
     std::vector<Operation> ops;
     push_dir(ops, ctx.install.htmlcache_dir);
     push_dir(ops, ctx.install.config_dir / "htmlcache");
+    auto steam_local = ctx.install.htmlcache_dir.parent_path();
+    push_dir(ops, steam_local / "GPUCache");
+    push_dir(ops, steam_local / "Code Cache");
+    push_file(ops, steam_local / "Local State");
+    push_file(ops, steam_local / "BrowsingTopicsState");
     return ops;
 }
 
@@ -283,6 +288,30 @@ std::vector<Operation> resolve_controller_configs(const ResolveContext& ctx) {
 std::vector<Operation> resolve_config_vdf(const ResolveContext& ctx) {
     std::vector<Operation> ops;
     push_file(ops, ctx.install.config_dir / "config.vdf");
+    return ops;
+}
+
+std::vector<Operation> resolve_local_vdf(const ResolveContext& ctx) {
+    std::vector<Operation> ops;
+    push_file(ops, ctx.install.local_vdf_path);
+    return ops;
+}
+
+std::vector<Operation> resolve_userdata_gamerecordings(const ResolveContext& ctx) {
+    std::vector<Operation> ops;
+    for (const auto& acc : ctx.accounts) {
+        auto target = path_to_w(acc.userdata_path / "gamerecordings");
+        ops.push_back(Operation{OpKind::RemoveTree, target, L"", acc.steamid64, 0});
+    }
+    return ops;
+}
+
+std::vector<Operation> resolve_userdata_ugcmsgcache(const ResolveContext& ctx) {
+    std::vector<Operation> ops;
+    for (const auto& acc : ctx.accounts) {
+        auto target = path_to_w(acc.userdata_path / "ugcmsgcache");
+        ops.push_back(Operation{OpKind::RemoveTree, target, L"", acc.steamid64, 0});
+    }
     return ops;
 }
 
@@ -433,15 +462,16 @@ const std::vector<Target>& catalog() {
                            L"accounts survive.",
                            TargetCategory::AccountResidue, &resolve_loginusers_vdf});
         t.push_back(Target{"steam.ssfn", L"Steam Guard sentry files (ssfn*)",
-                           L"Per-account 2FA bypass files. Set 'preserved_ssfn_files' in ignore.json "
-                           L"to skip.",
+                           L"Per-account 2FA bypass files. (Legacy: modern Steam no longer creates "
+                           L"ssfn files; auth tokens are now DPAPI-encrypted JWTs in ConnectCache.)",
                            TargetCategory::AccountResidue, &resolve_ssfn_files});
         t.push_back(Target{"steam.reg.autologin", L"HKCU AutoLoginUser + friends",
                            L"AutoLoginUser, RememberPassword, LastGameNameUsed, PseudoUUID under "
                            L"HKCU\\Software\\Valve\\Steam.",
                            TargetCategory::AccountResidue, &resolve_auto_login_value});
         t.push_back(Target{"steam.reg.users", L"HKCU\\...\\Steam\\Users\\<SteamID64>",
-                           L"Per-account subtree under HKCU. Preserved accounts are skipped.",
+                           L"Per-account subtree under HKCU. Preserved accounts are skipped. "
+                           L"(Legacy: removed in modern Steam client.)",
                            TargetCategory::AccountResidue, &resolve_users_subtree});
         t.push_back(Target{"steam.reg.activeprocess", L"HKCU\\...\\Steam\\ActiveProcess",
                            L"Active Steam process state. Recreated at next launch.",
@@ -467,8 +497,8 @@ const std::vector<Target>& catalog() {
                            L"%LOCALAPPDATA%\\CrashDumps.",
                            TargetCategory::CrashDump, &resolve_crash_local_appdata});
         t.push_back(Target{"steam.config_vdf", L"config.vdf",
-                           L"Maps every account ever logged in to its sentry-file filename. Steam "
-                           L"regenerates a fresh empty config on next launch.",
+                           L"DPAPI-encrypted JWT refresh tokens in ConnectCache. Surgically edited "
+                           L"so preserved accounts survive. Steam regenerates on next launch.",
                            TargetCategory::AccountResidue, &resolve_config_vdf});
         t.push_back(Target{"steam.appcache_stats", L"Appcache stats",
                            L"Per-game stats binary cache under <install>/appcache/stats.",
@@ -516,6 +546,18 @@ const std::vector<Target>& catalog() {
                            L"the record of which games are installed. Opt-in: Steam will see "
                            L"games as uninstalled until you re-add them.",
                            TargetCategory::GameData, &resolve_appmanifests});
+        t.push_back(Target{"steam.local_vdf", L"local.vdf (machine-level ConnectCache)",
+                           L"%LOCALAPPDATA%/Steam/local.vdf. DPAPI-encrypted JWT refresh tokens "
+                           L"in ConnectCache. Surgically edited so preserved accounts survive.",
+                           TargetCategory::AccountResidue, &resolve_local_vdf});
+        t.push_back(Target{"steam.userdata_gamerecordings", L"Game recordings metadata",
+                           L"userdata\\<id>\\gamerecordings. Per-account gameplay recording "
+                           L"metadata. Filtered by ignore list.",
+                           TargetCategory::GameData, &resolve_userdata_gamerecordings});
+        t.push_back(Target{"steam.userdata_ugcmsgcache", L"UGC message cache",
+                           L"userdata\\<id>\\ugcmsgcache. Per-account user-generated content "
+                           L"message cache. Filtered by ignore list.",
+                           TargetCategory::Cache, &resolve_userdata_ugcmsgcache});
         return t;
     }();
     return targets;

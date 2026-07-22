@@ -35,6 +35,7 @@ bool target_is_userdata(std::string_view id) { return id == "steam.userdata"; }
 bool target_is_autologin(std::string_view id) { return id == "steam.reg.autologin"; }
 bool target_is_remote_clients(std::string_view id) { return id == "steam.remoteclients"; }
 bool target_is_config_vdf(std::string_view id) { return id == "steam.config_vdf"; }
+bool target_is_local_vdf(std::string_view id) { return id == "steam.local_vdf"; }
 
 void compute_size(Operation& op) {
     if (op.kind == OpKind::RemoveFile || op.kind == OpKind::RemoveTree) {
@@ -278,6 +279,64 @@ void rewrite_config_vdf(std::vector<PlanStep>& steps, const std::string& target_
     }
 }
 
+void rewrite_local_vdf(std::vector<PlanStep>& steps, const std::string& target_id,
+                       const ResolveContext& ctx, const IgnoreList* ignore) {
+    if (!ignore || ignore->preserved_account_ids.empty()) {
+        return;
+    }
+    auto vdf_path = ctx.install.local_vdf_path;
+    auto doc = vdf::load(vdf_path);
+    if (!doc || !doc->root || !doc->root->is_object()) {
+        return;
+    }
+
+    auto* software = doc->root->find(L"Software");
+    auto* valve = software ? software->find(L"Valve") : nullptr;
+    auto* steam_node = valve ? valve->find(L"Steam") : nullptr;
+    if (!steam_node || !steam_node->is_object()) {
+        return;
+    }
+
+    auto* cache_node = steam_node->find(L"ConnectCache");
+    if (cache_node == nullptr || !cache_node->is_object()) {
+        return;
+    }
+
+    std::erase_if(steps, [&](const PlanStep& s) {
+        return s.target_id == target_id && s.op.kind == OpKind::RemoveFile;
+    });
+
+    for (const auto& entry : cache_node->children()) {
+        const std::wstring& hex_key = entry.first;
+        if (hex_key.empty()) {
+            continue;
+        }
+        std::uint64_t parsed = 0;
+        try {
+            std::wstring tmp{hex_key};
+            parsed = std::stoull(tmp, nullptr, 16);
+        } catch (...) {
+            continue;
+        }
+        std::wstring sid64;
+        if (parsed <= 0xFFFFFFFFULL) {
+            sid64 = stc::core::steam::account_id_to_steamid64(static_cast<std::uint32_t>(parsed));
+        } else {
+            sid64 = std::to_wstring(parsed);
+        }
+        if (sid64.empty() || ignore->preserves_account(sid64)) {
+            continue;
+        }
+        Operation op;
+        op.kind = OpKind::VdfRemoveChild;
+        op.target = vdf_path.wstring();
+        op.value_name = L"Software\\Valve\\Steam\\ConnectCache\\";
+        op.value_name += hex_key;
+        op.account_steamid64 = std::move(sid64);
+        steps.push_back(PlanStep{target_id, std::move(op)});
+    }
+}
+
 void rewrite_userdata_for_appids(std::vector<PlanStep>& steps, const std::string& target_id,
                                  const ResolveContext& ctx, std::span<const std::uint32_t> appids) {
     if (appids.empty()) {
@@ -355,6 +414,9 @@ Plan build_plan(std::span<const Target* const> targets, const ResolveContext& ct
         }
         if (target_is_config_vdf(t->id)) {
             rewrite_config_vdf(local, t->id, ctx, opts.ignore);
+        }
+        if (target_is_local_vdf(t->id)) {
+            rewrite_local_vdf(local, t->id, ctx, opts.ignore);
         }
         if (target_is_userdata(t->id) && !opts.only_appids.empty()) {
             rewrite_userdata_for_appids(local, t->id, ctx, opts.only_appids);

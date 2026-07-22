@@ -127,8 +127,8 @@ void draw_settings_screen(stc::app::AppState& state) {
     ImGui::Checkbox("Preserve all ssfn (Steam Guard sentry) files",
                     &state.ignore_list.preserve_all_ssfn);
     stc::ui::hover_tooltip(
-        "Skip every ssfn* file. Steam uses these to remember 2FA-trusted machines, so preserving "
-        "them keeps logged-in accounts from being prompted for Steam Guard codes after a clean. "
+        "Skip every ssfn* file. Modern Steam no longer creates ssfn files (auth tokens are now "
+        "DPAPI-encrypted JWTs in ConnectCache), but older installations may still have them. "
         "ssfn files cannot be filtered per-account, only globally.");
 
     draw_string_list("Preserved account ids (SteamID64)", nullptr,

@@ -3,8 +3,10 @@
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cwctype>
+#include <set>
 #include <vector>
 
 #include "core/steam_paths.hpp"
@@ -16,6 +18,34 @@ namespace stc::core {
 namespace {
 
 namespace fs_std = std::filesystem;
+
+std::uint32_t crc32_ieee(const char* data, std::size_t len) {
+    static constexpr auto table = [] {
+        std::array<std::uint32_t, 256> t{};
+        for (std::uint32_t i = 0; i < 256; ++i) {
+            std::uint32_t c = i;
+            for (int j = 0; j < 8; ++j)
+                c = (c & 1) ? (0xEDB88320u ^ (c >> 1)) : (c >> 1);
+            t[i] = c;
+        }
+        return t;
+    }();
+    std::uint32_t crc = 0xFFFFFFFFu;
+    for (std::size_t i = 0; i < len; ++i)
+        crc = table[(crc ^ static_cast<unsigned char>(data[i])) & 0xFF] ^ (crc >> 8);
+    return crc ^ 0xFFFFFFFFu;
+}
+
+std::wstring connect_cache_key(std::wstring_view account_name) {
+    std::string lower;
+    lower.reserve(account_name.size());
+    for (wchar_t ch : account_name)
+        lower.push_back(static_cast<char>(std::towlower(ch)));
+    auto crc = crc32_ieee(lower.data(), lower.size());
+    wchar_t buf[20];
+    std::swprintf(buf, 20, L"%x1", crc);
+    return buf;
+}
 
 bool starts_with_ci(std::wstring_view a, std::wstring_view b) {
     if (b.size() > a.size()) {
@@ -95,8 +125,6 @@ void rewrite_loginusers(std::vector<PlanStep>& steps, const std::string& target_
 }
 
 void strip_autologin_coupled_deletes(std::vector<PlanStep>& steps, const std::string& target_id) {
-    // RememberPassword and LastGameNameUsed go with whichever account ends up as AutoLoginUser,
-    // so they ride along. PseudoUUID stays cleaned: it's a machine GUID, not account data.
     std::erase_if(steps, [&](const PlanStep& s) {
         if (s.target_id != target_id || s.op.kind != OpKind::RemoveRegistryValue) {
             return false;
@@ -240,32 +268,22 @@ void rewrite_config_vdf(std::vector<PlanStep>& steps, const std::string& target_
         }
     }
 
-    // The ConnectCache walk used to be a separate helper that returned a SteamID64 from a hex key.
-    // Merged in here after the surgical-edit refactor because the two loops shared too much state
-    // and threading the IgnoreList plus the steps vector through a free function felt heavier than
-    // it needed to be.
+    // ConnectCache keys are CRC32(lowercase(account_name)) + "1".
+    std::set<std::wstring> preserved_keys;
+    for (const auto& acc : ctx.accounts) {
+        if (acc.account_name.empty()) {
+            continue;
+        }
+        if (ignore->preserves_account(acc.steamid64)) {
+            preserved_keys.insert(connect_cache_key(acc.account_name));
+        }
+    }
+
     auto* cache_node = steam_node->find(L"ConnectCache");
     if (cache_node != nullptr && cache_node->is_object()) {
         for (const auto& entry : cache_node->children()) {
             const std::wstring& hex_key = entry.first;
-            if (hex_key.empty()) {
-                continue;
-            }
-            std::uint64_t parsed = 0;
-            try {
-                std::wstring tmp{hex_key};
-                parsed = std::stoull(tmp, nullptr, 16);
-            } catch (...) {
-                continue;
-            }
-            std::wstring sid64;
-            if (parsed <= 0xFFFFFFFFULL) {
-                // 8-char hex = 32-bit account id; the rest of Steam works in SteamID64.
-                sid64 = stc::core::steam::account_id_to_steamid64(static_cast<std::uint32_t>(parsed));
-            } else {
-                sid64 = std::to_wstring(parsed);
-            }
-            if (sid64.empty() || ignore->preserves_account(sid64)) {
+            if (hex_key.empty() || preserved_keys.count(hex_key)) {
                 continue;
             }
             Operation op;
@@ -273,7 +291,6 @@ void rewrite_config_vdf(std::vector<PlanStep>& steps, const std::string& target_
             op.target = vdf_path.wstring();
             op.value_name = L"Software\\Valve\\Steam\\ConnectCache\\";
             op.value_name += hex_key;
-            op.account_steamid64 = std::move(sid64);
             steps.push_back(PlanStep{target_id, std::move(op)});
         }
     }
@@ -306,25 +323,20 @@ void rewrite_local_vdf(std::vector<PlanStep>& steps, const std::string& target_i
         return s.target_id == target_id && s.op.kind == OpKind::RemoveFile;
     });
 
+    // ConnectCache keys are CRC32(lowercase(account_name)) + "1".
+    std::set<std::wstring> preserved_keys;
+    for (const auto& acc : ctx.accounts) {
+        if (acc.account_name.empty()) {
+            continue;
+        }
+        if (ignore->preserves_account(acc.steamid64)) {
+            preserved_keys.insert(connect_cache_key(acc.account_name));
+        }
+    }
+
     for (const auto& entry : cache_node->children()) {
         const std::wstring& hex_key = entry.first;
-        if (hex_key.empty()) {
-            continue;
-        }
-        std::uint64_t parsed = 0;
-        try {
-            std::wstring tmp{hex_key};
-            parsed = std::stoull(tmp, nullptr, 16);
-        } catch (...) {
-            continue;
-        }
-        std::wstring sid64;
-        if (parsed <= 0xFFFFFFFFULL) {
-            sid64 = stc::core::steam::account_id_to_steamid64(static_cast<std::uint32_t>(parsed));
-        } else {
-            sid64 = std::to_wstring(parsed);
-        }
-        if (sid64.empty() || ignore->preserves_account(sid64)) {
+        if (hex_key.empty() || preserved_keys.count(hex_key)) {
             continue;
         }
         Operation op;
@@ -332,7 +344,6 @@ void rewrite_local_vdf(std::vector<PlanStep>& steps, const std::string& target_i
         op.target = vdf_path.wstring();
         op.value_name = L"Software\\Valve\\Steam\\ConnectCache\\";
         op.value_name += hex_key;
-        op.account_steamid64 = std::move(sid64);
         steps.push_back(PlanStep{target_id, std::move(op)});
     }
 }
